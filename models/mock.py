@@ -1,3 +1,5 @@
+import json
+
 from models.clients import ModelClient
 from models.schemas import ModelRequest, ModelResponse
 
@@ -9,13 +11,16 @@ class MockModel(ModelClient):
     def generate(self, request: ModelRequest) -> ModelResponse:
         user_message = request.messages[-1].content
 
-        response = (
-            "This is an observation requiring further authorization analysis.\n\n"
-            f"Observation received: {user_message}\n\n"
-            "Status: HYPOTHESIS"
-        )
+        data = {
+            "status": "HYPOTHESIS",
+            "summary": "Observation requires further analysis.",
+            "confidence": 0.25,
+            "evidence": [user_message],
+            "hypothesis": ["Further authorized verification may be warranted."],
+            "recommended_next_step": ("Review the ovservation within the authorized scope."),
+        }
 
         return ModelResponse(
-            content=response,
+            content=json.dumps(data),
             model="mock-model",
         )

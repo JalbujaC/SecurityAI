@@ -1,5 +1,7 @@
 from typing import Any
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from analysis import hypotheses
 
 @dataclass 
 class ModelMessage:
@@ -17,5 +19,16 @@ class ModelResponse:
     content: str
     model: str
     raw: Any = None
+
+@dataclass
+class AnalysisResult:
+    status: str
+    summary: str
+    confidence: float
+    evidence: list[str] = field(default_factory=list)
+    hypotheses: list[str] = field(default_factory=list)
+    recommended_next_step: str = ""
+
+
 
    

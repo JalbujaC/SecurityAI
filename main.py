@@ -1,14 +1,14 @@
 from agent.core import SecurityAI
-from models.mock import MockModel
+from models.ollama import OllamaClient
 
 def main():
-    model = MockModel()
+    model = OllamaClient(model_name="qwen3:4b")
     agent = SecurityAI(model)
 
     print()
     print("[SECURITY AI] Starting SecurityAI...")
 
-    print("[SECURITY AI] Initializing {model.__class__.__name__}...")
+    print(f"[SECURITY AI] Initializing {model.model_name}...")
     print()
 
     observation = "example.com exposes /api/users/{id}"
@@ -19,9 +19,23 @@ def main():
 
     print("Agent:")
 
-    response = agent.analyze(observation)
+    result = agent.analyze(observation)
 
-    print(response)
+    print(f"Status: {result.status}")
+    print(f"Confidence: {result.confidence:.2f}")
+    print()
+    print(f"Summary: {result.summary}")
+    print()
+    print("Evidence:")
+    for item in result.evidence:
+        print(f" - {item}")
+
+    print()
+    print("Hypothese:")
+    for item in result.hypotheses:
+        print(f" - {item}")
+    print()
+    print(f"Next step: {result.recommended_next_step}")
 
 
 if __name__ == "__main__":
