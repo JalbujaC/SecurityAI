@@ -3,7 +3,7 @@ import re
 from tools.base import SecurityTool
 from tools.schemas import ToolRequest, ToolResult
 from scope.validator import ScopeValidator
-
+from tools.subfinder import SubfinderTool
 
 class ToolRegistry:
     def __init__(self, scope_validator: ScopeValidator):
