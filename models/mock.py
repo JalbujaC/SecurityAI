@@ -16,7 +16,7 @@ class MockModel(ModelClient):
             "summary": "Observation requires further analysis.",
             "confidence": 0.25,
             "evidence": [user_message],
-            "hypothesis": ["Further authorized verification may be warranted."],
+            "hypotheses": ["Further authorized verification may be warranted."],
             "recommended_next_step": ("Review the ovservation within the authorized scope."),
         }
 

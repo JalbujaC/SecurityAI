@@ -25,7 +25,7 @@ class ToolRegistry:
         except KeyError as exc:
             raise KeyError(f"Unknown tool: {tool_name}") from exc
 
-    def execute(self, request: ToolRequest) -> ToolRequest:
+    def execute(self, request: ToolRequest) -> ToolResult:
         self. scope_validator.validate(request.target)
 
         tool = self.get(request.tool_name)

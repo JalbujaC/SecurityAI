@@ -12,7 +12,7 @@ class SecurityAI:
     def __init__(self, model: ModelClient):
         self.model = model
 
-    def analyze(self, observation: str) -> str:
+    def analyze(self, observation: str) -> AnalysisResult:
 
         messages = [
             ModelMessage(role="system", content=(
@@ -28,7 +28,7 @@ class SecurityAI:
                     "confidence: 0.0, \n"
                     "evidence: [directly observed facts only]"
                     "hypotheses: [possible issues requiring verification]"
-                    "recommended_next_Steps: one safe verification step"
+                    "recommended_next_step: one safe verification step"
                     "}\n\n"
                     "confidence must be between 0.0 and 1.0"
             )),
