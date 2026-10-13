@@ -15,6 +15,7 @@ def test_registry_contains_subfinder():
 
     assert "subfinder" in tools
     assert "httpx" in tools
+    assert "katana" in tools
 def test_registry_blocks_out_of_scope_subfinder_request():
     config = ScopeConfig(
         allowed_domains=["example.com"]
