@@ -3,6 +3,7 @@ from scope.validator import ScopeValidator
 
 from tools.registry import ToolRegistry
 from tools.subfinder import SubfinderTool
+from tools.httpx import HttpxTool
 
 
 def build_tool_registry(scope_config: ScopeConfig) -> ToolRegistry:
@@ -17,5 +18,10 @@ def build_tool_registry(scope_config: ScopeConfig) -> ToolRegistry:
             scope_validator=validator
         )
     )
+    registry.register(
+            HttpxTool(
+                scope_validator=validator
+            )
+        )
 
     return registry
