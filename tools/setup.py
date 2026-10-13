@@ -1,12 +1,16 @@
 from scope.schemas import ScopeConfig
 from scope.validator import ScopeValidator
 
+from tools import nuclei
 from tools.registry import ToolRegistry
 from tools.subfinder import SubfinderTool
 from tools.httpx import HttpxTool
 from tools.katana import KatanaTool
+from tools.dnsx import DnsxTool
+from tools.nuclei import NucleiTool
+from tools.ffuf import FfufTool
 
-def build_tool_registry(scope_config: ScopeConfig) -> ToolRegistry:
+def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRegistry:
     validator = ScopeValidator(scope_config)
 
     registry = ToolRegistry(
@@ -19,14 +23,29 @@ def build_tool_registry(scope_config: ScopeConfig) -> ToolRegistry:
         )
     )
     registry.register(
-            HttpxTool(
-                scope_validator=validator
-            )
+        HttpxTool(
+            scope_validator=validator
         )
+    )
     registry.register(
-            KatanaTool(
-                scope_validator=validator
-            )
+        KatanaTool(
+            scope_validator=validator
         )
-
+    )
+    registry.register(
+        DnsxTool(
+            scope_validator=validator
+        )
+    )
+    registry.register(
+        NucleiTool(
+            scope_validator=validator
+        )
+    )
+    registry.register(
+        FfufTool(
+            scope_validator=validator,
+            wordlist=ffuf_wordlist
+        )
+    )
     return registry

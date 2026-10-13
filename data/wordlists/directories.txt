@@ -1,0 +1,7 @@
+admin
+api
+login
+dashboard
+uploads
+static
+assets
