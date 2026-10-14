@@ -9,6 +9,8 @@ from tools.katana import KatanaTool
 from tools.dnsx import DnsxTool
 from tools.nuclei import NucleiTool
 from tools.ffuf import FfufTool
+from tools.naabu import NaabuTool
+from tools.gau import GauTool
 
 def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRegistry:
     validator = ScopeValidator(scope_config)
@@ -46,6 +48,16 @@ def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRe
         FfufTool(
             scope_validator=validator,
             wordlist=ffuf_wordlist
+        )
+    )
+    registry.register(
+        NaabuTool(
+            scope_validator=validator
+        )
+    )
+    registry.register(
+        GauTool(
+            scope_validator=validator
         )
     )
     return registry
