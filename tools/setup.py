@@ -14,6 +14,7 @@ from tools.ffuf import FfufTool
 from tools.naabu import NaabuTool
 from tools.gau import GauTool
 from tools.dalfox import DalfoxTool
+from tools.nuclei_dast import NucleiDastTool
 
 def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRegistry:
     validator = ScopeValidator(scope_config)
@@ -65,6 +66,11 @@ def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRe
     )
     registry.register(
         DalfoxTool(
+            scope_validator=validator
+        )
+    )
+    registry.register(
+        NucleiDastTool(
             scope_validator=validator
         )
     )
