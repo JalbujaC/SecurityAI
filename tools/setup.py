@@ -3,6 +3,8 @@ from scope.validator import ScopeValidator
 
 from tools import nuclei
 from tools.registry import ToolRegistry
+
+
 from tools.subfinder import SubfinderTool
 from tools.httpx import HttpxTool
 from tools.katana import KatanaTool
@@ -11,6 +13,7 @@ from tools.nuclei import NucleiTool
 from tools.ffuf import FfufTool
 from tools.naabu import NaabuTool
 from tools.gau import GauTool
+from tools.dalfox import DalfoxTool
 
 def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRegistry:
     validator = ScopeValidator(scope_config)
@@ -57,6 +60,11 @@ def build_tool_registry(scope_config: ScopeConfig, ffuf_wordlist: str) -> ToolRe
     )
     registry.register(
         GauTool(
+            scope_validator=validator
+        )
+    )
+    registry.register(
+        DalfoxTool(
             scope_validator=validator
         )
     )

@@ -28,6 +28,8 @@ def test_registry_contains_subfinder(tmp_path):
     assert "ffuf" in tools
     assert "naabu" in tools
     assert "gau" in tools
+    assert "dalfox" in tools
+    
 def test_registry_blocks_out_of_scope_subfinder_request(tmp_path):
     wordlist = tmp_path / "directories.txt"
     
