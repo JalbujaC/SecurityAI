@@ -29,6 +29,24 @@ class AnalysisResult:
     hypotheses: list[str] = field(default_factory=list)
     recommended_next_step: str = ""
 
+@dataclass
+class ToolAction:
+    tool_name: str
+    target: str
+    arguments: dict[str, Any] = field(default_factory=dict)
+    reason: str = ""
+
+@dataclass
+class AgentDecision:
+    action: str
+    reasoning: str
+    tool_action: ToolAction | None = None
+
+@dataclass
+class ExecutionRecord:
+    step: int
+    decision: AgentDecision
+    result: Any = None
 
 
    
