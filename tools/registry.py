@@ -1,9 +1,7 @@
-import re
-
 from tools.base import SecurityTool
 from tools.schemas import ToolRequest, ToolResult
 from scope.validator import ScopeValidator
-from tools.subfinder import SubfinderTool
+
 
 class ToolRegistry:
     def __init__(self, scope_validator: ScopeValidator):
@@ -26,7 +24,7 @@ class ToolRegistry:
             raise KeyError(f"Unknown tool: {tool_name}") from exc
 
     def execute(self, request: ToolRequest) -> ToolResult:
-        self. scope_validator.validate(request.target)
+        self.scope_validator.validate(request.target)
 
         tool = self.get(request.tool_name)
 

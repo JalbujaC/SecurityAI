@@ -1,5 +1,4 @@
 import json
-from urllib import request, response
 
 from models.clients import ModelClient
 from models.schemas import (

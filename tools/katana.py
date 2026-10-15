@@ -1,8 +1,4 @@
-from encodings.punycode import T
 import json
-from json import JSONDecodeError, tool
-from multiprocessing import process
-import re
 import subprocess
 
 from scope.validator import ScopeValidator
@@ -54,7 +50,7 @@ class KatanaTool(SecurityTool):
                 tool_name=self.name,
                 target=request.target,
                 success=False,
-                error="Ktana execution timed out."
+                error="Katana execution timed out."
             )
 
         except OSError as exc:

@@ -149,6 +149,7 @@ def test_coordinator_runs_multiple_steps():
     history = coordinator.run(
         observation="Begin reconnaissance.",
         available_tools=registry.list_tools(),
+        allowed_targets=["example.com"],
         max_steps=5,
     )
 
@@ -217,6 +218,7 @@ def test_coordinator_respects_max_steps():
     history = coordinator.run(
         observation="Test bounded execution.",
         available_tools=registry.list_tools(),
+        allowed_targets=["example.com"],
         max_steps=3,
     )
 

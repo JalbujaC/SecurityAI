@@ -31,7 +31,7 @@ def main():
         print(f" - {item}")
 
     print()
-    print("Hypothese:")
+    print("Hypotheses:")
     for item in result.hypotheses:
         print(f" - {item}")
     print()

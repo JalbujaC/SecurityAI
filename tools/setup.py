@@ -1,9 +1,7 @@
 from scope.schemas import ScopeConfig
 from scope.validator import ScopeValidator
 
-from tools import nuclei
 from tools.registry import ToolRegistry
-
 
 from tools.subfinder import SubfinderTool
 from tools.httpx import HttpxTool

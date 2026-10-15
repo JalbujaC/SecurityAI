@@ -74,7 +74,7 @@ class GauTool(SecurityTool):
 
             try:
                 data = json.loads(line)
-            except json.json.JSONDecodeError:
+            except json.JSONDecodeError:
                 continue
 
             url = data.get("url")

@@ -1,7 +1,7 @@
 import requests
 
 from models.clients import ModelClient
-from models.schemas import ModelRequest, ModelResponse , ModelMessage
+from models.schemas import ModelRequest, ModelResponse
 
 
 class OllamaClient(ModelClient):

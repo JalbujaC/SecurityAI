@@ -1,7 +1,6 @@
 from typing import Any
 from dataclasses import dataclass, field
 
-from analysis import hypotheses
 
 @dataclass 
 class ModelMessage:

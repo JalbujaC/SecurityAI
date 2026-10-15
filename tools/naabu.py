@@ -15,7 +15,7 @@ class NaabuTool(SecurityTool):
             binary: str = "naabu",
             timeout: int = 120,
             rate_limit: int = 50,
-            ports: str = "80,433,8080,8443"
+            ports: str = "80,443,8080,8443"
     ):
         self.scope_validator = scope_validator
         self.binary = binary
@@ -77,7 +77,7 @@ class NaabuTool(SecurityTool):
 
             try: 
                 data = json.loads(line)
-            except json.json.JSONDecodeError:
+            except json.JSONDecodeError:
                 continue
 
 
