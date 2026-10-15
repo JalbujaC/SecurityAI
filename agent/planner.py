@@ -111,26 +111,41 @@ class AgentPlanner:
 
         if action == "RUN_TOOL":
             if not isinstance(tool_data, dict):
-                raise ValueError(f"RUN_TOOL requires tool_action.")
+                raise ValueError(
+                    "RUN_TOOL requires tool_action."
+                )
+
+            model_target = tool_data.get("target", "")
+
+            if len(allowed_targets) == 1:
+                selected_target = allowed_targets[0]
+
+            elif allowed_targets:
+                if model_target not in allowed_targets:
+                    raise ValueError(
+                        f"Model proposed invalid target: {model_target}"
+                    )
+
+                selected_target = model_target
+
+            else:
+                selected_target = model_target
+
 
             tool_action = ToolAction(
                 tool_name=tool_data.get("tool_name", ""),
-                target=tool_data.get("target", ""),
+                target=selected_target,
                 arguments=tool_data.get("arguments", {}),
-                reason=tool_data.get("reason", "")
+                reason=tool_data.get("reason", ""),
             )
+
         else:
             if tool_data is not None:
-                raise ValueError(f"{action} must not include tool_action.")
+                raise ValueError(
+                    f"{action} must not include tool_action."
+                )
 
             tool_action = None
-        if (
-            allowed_targets
-            and tool_action.target not in allowed_targets
-        ):
-            raise ValueError(
-                f"Model proposed invalid target: {tool_action.target}"
-            )
         return AgentDecision(
             action=action,
             reasoning=reasoning,

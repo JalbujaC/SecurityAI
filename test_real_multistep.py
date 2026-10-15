@@ -10,7 +10,7 @@ from scope.schemas import ScopeConfig
 from tools.setup import build_tool_registry
 
 
-TARGET = "www.hytale.com"
+TARGET = "hytale.com"
 
 
 def main():
