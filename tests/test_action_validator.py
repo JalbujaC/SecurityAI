@@ -123,3 +123,76 @@ def test_model_cannot_change_rate_limit(tmp_path):
 
     with pytest.raises(ValueError):
         validator.validate(action)
+
+def test_passive_tool_does_not_require_approval(
+    tmp_path,
+):
+    validator = build_validator(
+        tmp_path
+    )
+
+    action = ToolAction(
+        tool_name="subfinder",
+        target="example.com",
+    )
+
+    validator.validate(
+        action
+    )
+
+def test_dalfox_requires_explicit_approval(
+    tmp_path,
+):
+    validator = build_validator(
+        tmp_path
+    )
+
+    action = ToolAction(
+        tool_name="dalfox",
+        target="https://example.com",
+    )
+
+    with pytest.raises(
+        PermissionError,
+        match="requires explicit approval",
+    ):
+        validator.validate(
+            action
+        )
+
+def test_nuclei_dast_requires_explicit_approval(
+    tmp_path,
+):
+    validator = build_validator(
+        tmp_path
+    )
+
+    action = ToolAction(
+        tool_name="nuclei_dast",
+        target="https://example.com",
+    )
+
+    with pytest.raises(
+        PermissionError,
+        match="requires explicit approval",
+    ):
+        validator.validate(
+            action
+        )
+
+def test_approved_active_tool_is_accepted(
+    tmp_path,
+):
+    validator = build_validator(
+        tmp_path
+    )
+
+    action = ToolAction(
+        tool_name="dalfox",
+        target="https://example.com",
+        approved=True,
+    )
+
+    validator.validate(
+        action
+    )

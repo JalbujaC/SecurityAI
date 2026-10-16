@@ -1,5 +1,8 @@
 import json
 
+from storage.evidence import EvidenceRecord
+from storage.evidence_store import EvidenceStore
+
 from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
 from models.schemas import AgentDecision, ExecutionRecord
@@ -17,11 +20,13 @@ class AgentCoordinator:
         self,
         planner: AgentPlanner,
         executor: AgentExecutor,
-        target_manager: TargetManager | None = None 
+        target_manager: TargetManager | None = None,
+        evidence_store: EvidenceStore | None = None,
     ):
         self.planner = planner
         self.executor = executor
         self.target_manager = target_manager
+        self.evidence_store = evidence_store
 
     def run_once(
         self,
@@ -87,6 +92,16 @@ class AgentCoordinator:
 
             if result is None:
                 break
+
+            if (
+                self.evidence_store is not None
+                and result is not None
+            ):
+                self.evidence_store.add(
+                    EvidenceRecord.from_tool_result(
+                        result
+                    )
+                )           
             if (
                 self.target_manager is not None
                 and result.success

@@ -1,6 +1,7 @@
 from models.schemas import ToolAction
 from tools.registry import ToolRegistry
 from tools.arguments import ToolArgumentPolicy
+from agent.approval_policy import ApprovalPolicy
 
 class ActionValidator:
     """
@@ -22,5 +23,15 @@ class ActionValidator:
         tool_name=action.tool_name,
         arguments=action.arguments,
     )
+        if (
+            ApprovalPolicy.requires_approval(
+                action.tool_name
+            )
+            and not action.approved
+        ):
+            raise PermissionError(
+                f"Tool requires explicit approval: "
+                f"{action.tool_name}"
+            )
         #Invokes the same deterministic scope system used by the registry
         self.registry.scope_validator.validate(action.target)

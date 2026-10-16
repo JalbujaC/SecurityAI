@@ -12,8 +12,11 @@ from scope.schemas import ScopeConfig
 from scope.targets import TargetManager
 from scope.validator import ScopeValidator
 
+from storage import evidence_store
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
+
+from storage.evidence_store import EvidenceStore
 
 
 class CoordinatorTestModel(ModelClient):
@@ -107,6 +110,8 @@ def build_coordinator(
         allowed_domains=["example.com"]
     )
 
+    evidence_store = EvidenceStore()
+
     scope_validator = ScopeValidator(
         scope
     )
@@ -144,17 +149,19 @@ def build_coordinator(
         planner=planner,
         executor=executor,
         target_manager=target_manager,
+        evidence_store=evidence_store
     )
 
     return (
         coordinator,
         registry,
         target_manager,
+        evidence_store
     )
 
 
 def test_coordinator_runs_single_tool_cycle():
-    coordinator, registry, target_manager = (
+    coordinator, registry, target_manager, evidence_store = (
         build_coordinator(
             CoordinatorTestModel()
         )
@@ -180,7 +187,7 @@ def test_coordinator_runs_single_tool_cycle():
 
 
 def test_coordinator_runs_multiple_steps():
-    coordinator, registry, _ = (
+    coordinator, registry, _, _ = (
         build_coordinator(
             MultiStepTestModel()
         )
@@ -208,7 +215,7 @@ def test_coordinator_runs_multiple_steps():
 
 
 def test_coordinator_respects_max_steps():
-    coordinator, registry, _ = (
+    coordinator, registry, _, _ = (
         build_coordinator(
             NeverStopModel()
         )
@@ -230,7 +237,7 @@ def test_coordinator_respects_max_steps():
 
 
 def test_coordinator_builds_targets_from_manager():
-    coordinator, registry, target_manager = (
+    coordinator, registry, target_manager, evidence_store = (
         build_coordinator(
             CoordinatorTestModel()
         )
@@ -250,7 +257,7 @@ def test_coordinator_builds_targets_from_manager():
 
 
 def test_target_manager_remains_available_after_run():
-    coordinator, registry, target_manager = (
+    coordinator, registry, target_manager, evidence_store = (
         build_coordinator(
             CoordinatorTestModel()
         )
@@ -266,3 +273,24 @@ def test_target_manager_remains_available_after_run():
         "example.com"
         in target_manager.values()
     )
+
+def test_coordinator_stores_tool_result_as_evidence():
+    coordinator, registry, _, evidence_store = (
+        build_coordinator(
+            CoordinatorTestModel()
+        )
+    )
+
+    coordinator.run(
+        observation="Begin reconnaissance.",
+        available_tools=registry.list_tools(),
+        max_steps=1,
+    )
+
+    assert evidence_store.count() == 1
+
+    record = evidence_store.all()[0]
+
+    assert record.tool_name == "mock_recon"
+    assert record.target == "example.com"
+    assert record.success is True

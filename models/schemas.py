@@ -34,6 +34,7 @@ class ToolAction:
     target: str
     arguments: dict[str, Any] = field(default_factory=dict)
     reason: str = ""
+    approved: bool = False
 
 @dataclass
 class AgentDecision:
