@@ -4,10 +4,14 @@ from agent.action_validator import ActionValidator
 from agent.coordinator import AgentCoordinator
 from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
+
 from models.clients import ModelClient
 from models.schemas import ModelRequest, ModelResponse
+
 from scope.schemas import ScopeConfig
+from scope.targets import TargetManager
 from scope.validator import ScopeValidator
+
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
 
@@ -34,49 +38,6 @@ class CoordinatorTestModel(ModelClient):
             model="coordinator-test-model",
         )
 
-def test_coordinator_runs_single_tool_cycle():
-    scope = ScopeConfig(
-        allowed_domains=["example.com"]
-    )
-
-    scope_validator = ScopeValidator(scope)
-
-    registry = ToolRegistry(
-        scope_validator=scope_validator
-    )
-
-    registry.register(
-        MockReconTool()
-    )
-
-    planner = AgentPlanner(
-        CoordinatorTestModel()
-    )
-
-    validator = ActionValidator(
-        registry
-    )
-
-    executor = AgentExecutor(
-        registry=registry,
-        validator=validator,
-    )
-
-    coordinator = AgentCoordinator(
-        planner=planner,
-        executor=executor,
-    )
-
-    decision, result = coordinator.run_once(
-        observation="Begin reconnaissance.",
-        available_tools=registry.list_tools(),
-    )
-
-    assert decision.action == "RUN_TOOL"
-
-    assert result is not None
-    assert result.success is True
-    assert result.tool_name == "mock_recon"
 
 class MultiStepTestModel(ModelClient):
     def __init__(self):
@@ -104,7 +65,9 @@ class MultiStepTestModel(ModelClient):
         else:
             data = {
                 "action": "ANALYZE",
-                "reasoning": "Enough evidence has been collected.",
+                "reasoning": (
+                    "Enough evidence has been collected."
+                ),
                 "tool_action": None,
             }
 
@@ -113,52 +76,6 @@ class MultiStepTestModel(ModelClient):
             model="multi-step-test-model",
         )
 
-def test_coordinator_runs_multiple_steps():
-    scope = ScopeConfig(
-    allowed_domains=["example.com"]
-    )
-        
-    scope_validator = ScopeValidator(scope)
-
-    registry = ToolRegistry(
-        scope_validator=scope_validator
-    )
-
-    registry.register(
-        MockReconTool()
-    )
-
-    planner = AgentPlanner(
-        MultiStepTestModel()
-    )
-
-    validator = ActionValidator(
-        registry
-    )
-
-    executor = AgentExecutor(
-        registry=registry,
-        validator=validator,
-    )
-
-    coordinator = AgentCoordinator(
-        planner=planner,
-        executor=executor,
-    )
-
-    history = coordinator.run(
-        observation="Begin reconnaissance.",
-        available_tools=registry.list_tools(),
-        allowed_targets=["example.com"],
-        max_steps=5,
-    )
-
-    assert len(history) == 2
-
-    assert history[0].decision.action == "RUN_TOOL"
-    assert history[0].result is not None
-
-    assert history[1].decision.action == "ANALYZE" 
 
 class NeverStopModel(ModelClient):
     def generate(
@@ -182,12 +99,17 @@ class NeverStopModel(ModelClient):
             model="never-stop-model",
         )
 
-def test_coordinator_respects_max_steps():
+
+def build_coordinator(
+    model: ModelClient,
+):
     scope = ScopeConfig(
         allowed_domains=["example.com"]
     )
 
-    scope_validator = ScopeValidator(scope)
+    scope_validator = ScopeValidator(
+        scope
+    )
 
     registry = ToolRegistry(
         scope_validator=scope_validator
@@ -197,8 +119,16 @@ def test_coordinator_respects_max_steps():
         MockReconTool()
     )
 
+    target_manager = TargetManager(
+        scope_validator=scope_validator
+    )
+
+    target_manager.add_root(
+        "example.com"
+    )
+
     planner = AgentPlanner(
-        NeverStopModel()
+        model
     )
 
     validator = ActionValidator(
@@ -213,13 +143,126 @@ def test_coordinator_respects_max_steps():
     coordinator = AgentCoordinator(
         planner=planner,
         executor=executor,
+        target_manager=target_manager,
+    )
+
+    return (
+        coordinator,
+        registry,
+        target_manager,
+    )
+
+
+def test_coordinator_runs_single_tool_cycle():
+    coordinator, registry, target_manager = (
+        build_coordinator(
+            CoordinatorTestModel()
+        )
+    )
+
+    target_map = (
+        target_manager.planner_targets(
+            registry.list_tools()
+        )
+    )
+
+    decision, result = coordinator.run_once(
+        observation="Begin reconnaissance.",
+        available_tools=registry.list_tools(),
+        target_map=target_map,
+    )
+
+    assert decision.action == "RUN_TOOL"
+
+    assert result is not None
+    assert result.success is True
+    assert result.tool_name == "mock_recon"
+
+
+def test_coordinator_runs_multiple_steps():
+    coordinator, registry, _ = (
+        build_coordinator(
+            MultiStepTestModel()
+        )
+    )
+
+    history = coordinator.run(
+        observation="Begin reconnaissance.",
+        available_tools=registry.list_tools(),
+        max_steps=5,
+    )
+
+    assert len(history) == 2
+
+    assert (
+        history[0].decision.action
+        == "RUN_TOOL"
+    )
+
+    assert history[0].result is not None
+
+    assert (
+        history[1].decision.action
+        == "ANALYZE"
+    )
+
+
+def test_coordinator_respects_max_steps():
+    coordinator, registry, _ = (
+        build_coordinator(
+            NeverStopModel()
+        )
     )
 
     history = coordinator.run(
         observation="Test bounded execution.",
         available_tools=registry.list_tools(),
-        allowed_targets=["example.com"],
         max_steps=3,
     )
 
     assert len(history) == 3
+
+    for record in history:
+        assert (
+            record.decision.action
+            == "RUN_TOOL"
+        )
+
+
+def test_coordinator_builds_targets_from_manager():
+    coordinator, registry, target_manager = (
+        build_coordinator(
+            CoordinatorTestModel()
+        )
+    )
+
+    target_map = (
+        target_manager.planner_targets(
+            registry.list_tools()
+        )
+    )
+
+    assert "mock_recon" in target_map
+
+    assert target_map["mock_recon"] == [
+        "example.com"
+    ]
+
+
+def test_target_manager_remains_available_after_run():
+    coordinator, registry, target_manager = (
+        build_coordinator(
+            CoordinatorTestModel()
+        )
+    )
+
+    coordinator.run(
+        observation="Begin reconnaissance.",
+        available_tools=registry.list_tools(),
+        max_steps=1,
+    )
+
+    assert (
+        "example.com"
+        in target_manager.values()
+    )

@@ -4,7 +4,7 @@ from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
 from models.schemas import AgentDecision, ExecutionRecord
 from tools.schemas import ToolResult
-
+from scope.targets import TargetManager
 
 class AgentCoordinator:
     """
@@ -17,23 +17,25 @@ class AgentCoordinator:
         self,
         planner: AgentPlanner,
         executor: AgentExecutor,
+        target_manager: TargetManager | None = None 
     ):
         self.planner = planner
         self.executor = executor
+        self.target_manager = target_manager
 
     def run_once(
         self,
         observation: str,
         available_tools: list[str],
         evidence: list[str] | None = None,
-        allowed_targets: list[str] | None = None
+        target_map: dict[str, list[str]] | None = None
     ) -> tuple[AgentDecision, ToolResult | None]:
 
         decision = self.planner.decide(
             observation=observation,
             available_tools=available_tools,
             evidence=evidence,
-            allowed_targets=allowed_targets
+            target_map=target_map
         )
 
         result = self.executor.execute(
@@ -46,7 +48,6 @@ class AgentCoordinator:
         self,
         observation: str,
         available_tools: list[str],
-        allowed_targets: list[str],
         max_steps: int = 5,
     ) -> list[ExecutionRecord]:
 
@@ -54,11 +55,20 @@ class AgentCoordinator:
         evidence: list[str] = []
 
         for step in range(1, max_steps + 1):
+            if self.target_manager is not None:
+                target_map = (
+                    self.target_manager.planner_targets(
+                        available_tools
+                    )
+                )
+            else:
+                target_map = {}            
+            
             decision, result = self.run_once(
                 observation=observation,
                 available_tools=available_tools,
                 evidence=evidence,
-                allowed_targets=allowed_targets
+                target_map=target_map
             )
 
             history.append(
@@ -77,7 +87,15 @@ class AgentCoordinator:
 
             if result is None:
                 break
-
+            if (
+                self.target_manager is not None
+                and result.success
+                and isinstance(result.output, dict)
+            ):
+                self.target_manager.ingest_tool_result(
+                    tool_name=result.tool_name,
+                    output=result.output
+                )
             evidence.append(
                 self._summarize_result(result)
             )

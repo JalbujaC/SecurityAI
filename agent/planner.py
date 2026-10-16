@@ -12,18 +12,26 @@ class AgentPlanner:
     def __init__(self, model: ModelClient):
         self.model = model
 
-    def decide(self, observation: str, available_tools: list[str], evidence: list[str] | None = None, allowed_targets: list[str] | None = None) -> AgentDecision:
+    def decide(self, observation: str, available_tools: list[str], evidence: list[str] | None = None, target_map: dict[str, list[str]] | None = None) -> AgentDecision:
 
         tools_text = ", ".join(sorted(available_tools))
 
         evidence = evidence or []
-        allowed_targets = allowed_targets or []
+        target_map = target_map or {}
         evidence_text = "\n".join(
             f"- {item}"
             for item in evidence
         )
 
-        targets_text = ", ".join(allowed_targets)
+        target_lines = []
+
+        for tool_name in sorted(target_map):
+            targets = target_map[tool_name]
+
+            if targets:
+                target_lines.append(f"{tool_name}: {", ".join(targets)}")
+
+        target_text = "\n".join(target_lines)
         messages = [
             ModelMessage(
                 role="system",
@@ -33,7 +41,7 @@ class AgentPlanner:
                     "You may only propose tools from this list:\n"
                     f"{tools_text}\n\n"
                     "You may ONLY select a target exactly as written in this list:\n"
-                    f"{targets_text}\n\n"
+                    f"{target_text if target_text else "None"}\n\n"
 
                     "Do not modify, abbreviate, reconstruct, or invent target names. "
                     "Copy the selected target exactly.\n\n"
@@ -96,9 +104,9 @@ class AgentPlanner:
         except json.JSONDecodeError as exc:
             raise ValueError(f"Model returned invalid decision JSON: {response.content}") from exc
 
-        return self._parse_decision(data, allowed_targets)
+        return self._parse_decision(data, target_map)
     
-    def _parse_decision(self, data: dict, allowed_targets: list[str]) -> AgentDecision:
+    def _parse_decision(self, data: dict, target_map: dict[str, list[str]]) -> AgentDecision:
         action = data.get("action")
 
         if action not in {"RUN_TOOL", "ANALYZE", "STOP"}:
@@ -115,7 +123,17 @@ class AgentPlanner:
                 )
 
             model_target = tool_data.get("target", "")
+            tool_name = tool_data.get("tool_name", "")
+            allowed_targets = target_map.get(
+                tool_name, 
+                []
+            )
 
+            if not allowed_targets:
+                raise ValueError(
+                    f"No eligible targets available for tool: "
+                    f"{tool_name}"
+                )
             if len(allowed_targets) == 1:
                 selected_target = allowed_targets[0]
 
@@ -130,6 +148,18 @@ class AgentPlanner:
             else:
                 selected_target = model_target
 
+            tool_action = ToolAction(
+                tool_name=tool_name,
+                target=selected_target,
+                arguments=tool_data.get(
+                    "arguments",
+                    {},
+                ),
+                reason=tool_data.get(
+                    "reason",
+                    "",
+                ),
+            )
 
             tool_action = ToolAction(
                 tool_name=tool_data.get("tool_name", ""),
