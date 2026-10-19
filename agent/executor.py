@@ -3,6 +3,10 @@ from models.schemas import AgentDecision
 from tools.registry import ToolRegistry
 from tools.schemas import ToolRequest, ToolResult
 
+from dataclasses import replace
+
+from agent.approval_policy import ApprovalPolicy
+
 
 class AgentExecutor:
     """
@@ -22,6 +26,7 @@ class AgentExecutor:
     def execute(
         self,
         decision: AgentDecision,
+        approved: bool = False,
     ) -> ToolResult | None:
 
         if decision.action != "RUN_TOOL":
@@ -32,16 +37,29 @@ class AgentExecutor:
                 "RUN_TOOL decision is missing tool_action."
             )
 
-        # First security boundary.
+        tool_action = decision.tool_action
+
+        if (
+            approved
+            and ApprovalPolicy.requires_approval(
+                tool_action.tool_name
+            )
+        ):
+            tool_action = replace(
+                tool_action,
+                approved=True,
+            )
+
         self.validator.validate(
-            decision.tool_action
+            tool_action
         )
 
         request = ToolRequest(
-            tool_name=decision.tool_action.tool_name,
-            target=decision.tool_action.target,
-            arguments=decision.tool_action.arguments,
+            tool_name=tool_action.tool_name,
+            target=tool_action.target,
+            arguments=tool_action.arguments,
         )
 
-        # Registry performs scope validation again.
-        return self.registry.execute(request)
+        return self.registry.execute(
+            request
+        )

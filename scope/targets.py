@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, assert_type
+from typing import Literal
 
 from scope.validator import ScopeValidator
 
@@ -74,10 +74,10 @@ class TargetManager:
     def roots(self) -> list[TargetAsset]:
         return [
             asset
-            for asset in self._targets.value()
+            for asset in self._targets.values()
             if asset.kind == "root_domain"
         ]
-
+    
     def all(self) -> list[TargetAsset]:
         return list(self._targets.values())
 

@@ -8,6 +8,8 @@ from scope.validator import ScopeValidator
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
 
+from tools.schemas import ToolResult
+from tools.setup import build_tool_registry
 
 def build_executor():
     scope = ScopeConfig(
@@ -128,4 +130,118 @@ def test_executor_rejects_missing_tool_action():
     with pytest.raises(ValueError):
         executor.execute(decision)
 
+
+def test_active_tool_is_blocked_without_external_approval(
+    tmp_path,
+):
+    wordlist = tmp_path / "directories.txt"
+
+    wordlist.write_text(
+        "admin\napi\nlogin\n",
+        encoding="utf-8",
+    )
+
+    scope = ScopeConfig(
+        allowed_domains=["example.com"]
+    )
+
+    registry = build_tool_registry(
+        scope_config=scope,
+        ffuf_wordlist=str(wordlist),
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    decision = AgentDecision(
+        action="RUN_TOOL",
+        reasoning="Validate XSS hypothesis.",
+        tool_action=ToolAction(
+            tool_name="dalfox",
+            target="https://example.com",
+        ),
+    )
+
+    with pytest.raises(
+        PermissionError,
+        match="requires explicit approval",
+    ):
+        executor.execute(
+            decision
+        )
+
+
+def test_external_approval_allows_active_tool_validation(
+    tmp_path,
+    monkeypatch,
+):
+    wordlist = tmp_path / "directories.txt"
+
+    wordlist.write_text(
+        "admin\napi\nlogin\n",
+        encoding="utf-8",
+    )
+
+    scope = ScopeConfig(
+        allowed_domains=["example.com"]
+    )
+
+    registry = build_tool_registry(
+        scope_config=scope,
+        ffuf_wordlist=str(wordlist),
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    decision = AgentDecision(
+        action="RUN_TOOL",
+        reasoning="Validate XSS hypothesis.",
+        tool_action=ToolAction(
+            tool_name="dalfox",
+            target="https://example.com",
+        ),
+    )
+
+    tool = registry.get(
+        "dalfox"
+    )
+
+    def fake_run(request):
+        return ToolResult(
+            tool_name="dalfox",
+            target=request.target,
+            success=True,
+            output={
+                "findings": [],
+                "count": 0,
+            },
+        )
+
+    monkeypatch.setattr(
+        tool,
+        "run",
+        fake_run,
+    )
+
+    result = executor.execute(
+        decision,
+        approved=True,
+    )
+
+    assert result is not None
+    assert result.success is True
+    assert result.tool_name == "dalfox"
 

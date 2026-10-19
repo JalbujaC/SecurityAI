@@ -161,13 +161,6 @@ class AgentPlanner:
                 ),
             )
 
-            tool_action = ToolAction(
-                tool_name=tool_data.get("tool_name", ""),
-                target=selected_target,
-                arguments=tool_data.get("arguments", {}),
-                reason=tool_data.get("reason", ""),
-            )
-
         else:
             if tool_data is not None:
                 raise ValueError(

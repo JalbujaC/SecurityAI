@@ -301,3 +301,37 @@ def test_tool_without_eligible_targets_is_rejected():
                 "katana": [],
             },
         )
+
+def test_model_cannot_self_approve_tool_action():
+    model = DecisionModel(
+        {
+            "action": "RUN_TOOL",
+            "reasoning": "Run active validation.",
+            "tool_action": {
+                "tool_name": "dalfox",
+                "target": "https://example.com",
+                "arguments": {},
+                "reason": "Validate XSS.",
+                "approved": True,
+            },
+        }
+    )
+
+    planner = AgentPlanner(
+        model
+    )
+
+    decision = planner.decide(
+        observation="Test approval boundary.",
+        available_tools=[
+            "dalfox",
+        ],
+        target_map={
+            "dalfox": [
+                "https://example.com"
+            ]
+        },
+    )
+
+    assert decision.tool_action is not None
+    assert decision.tool_action.approved is False
