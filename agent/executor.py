@@ -27,6 +27,7 @@ class AgentExecutor:
         self,
         decision: AgentDecision,
         approved: bool = False,
+        targets: list[str] | None = None
     ) -> ToolResult | None:
 
         if decision.action != "RUN_TOOL":
@@ -58,6 +59,7 @@ class AgentExecutor:
             tool_name=tool_action.tool_name,
             target=tool_action.target,
             arguments=tool_action.arguments,
+            targets=targets or []
         )
 
         return self.registry.execute(

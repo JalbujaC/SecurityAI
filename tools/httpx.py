@@ -17,17 +17,26 @@ class HttpxTool(SecurityTool):
         self.timeout = timeout
 
     def run(self, request: ToolRequest) -> ToolResult:
+        targets = (
+            request.targets
+            if request.targets
+            else [request.target]
+        )
+
         command = [
-            self.binary, 
-            "-u",
-            request.target,
+            self.binary,
             "-json",
             "-silent",
             "-status-code",
             "-title",
-            "-tech-detect"
+            "-tech-detect",
         ]
 
+        for target in targets:
+            command.extend([
+                "-u",
+                target,
+            ])
         try:
             process = subprocess.run(
                 command,

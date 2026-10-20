@@ -28,6 +28,7 @@ class TargetManager:
     ):
         self.scope_validator = scope_validator
         self._targets: dict[str, TargetAsset] = {}
+        self._attempted: dict[str, set[str]] = {}
 
     def add_root(
             self,
@@ -61,6 +62,14 @@ class TargetManager:
         else:
             value = self.scope_validator.normalize_target(target)
 
+        existing = self._targets.get(value)
+
+        if (
+            existing is not None
+            and existing.kind == "root_domain"
+        ):
+            return existing
+        
         asset = TargetAsset(
             value=value,
             kind=kind,
@@ -182,10 +191,15 @@ class TargetManager:
         tool_name: str,
     ) -> list[TargetAsset]:
         from scope.tool_targets import ToolTargetPolicy
+        from scope.prioritizer import TargetPrioritizer
 
-        return ToolTargetPolicy.filter_assets(
+        assets = ToolTargetPolicy.filter_assets(
             tool_name,
-            self.all(),
+            self.all()
+        )
+
+        return TargetPrioritizer.rank(
+            assets
         )
 
     def planner_targets(
@@ -203,3 +217,42 @@ class TargetManager:
             ]
 
         return target_map
+
+    def mark_attempted(
+        self,
+        tool_name: str,
+        targets: list[str],
+    ) -> None:
+        attempted = self._attempted.setdefault(
+            tool_name,
+            set(),
+        )
+
+        attempted.update(
+            targets
+        )
+
+
+    def was_attempted(
+        self,
+        tool_name: str,
+        target: str,
+    ) -> bool:
+        return target in self._attempted.get(
+            tool_name,
+            set(),
+        )
+
+
+    def unattempted_for(
+        self,
+        tool_name: str,
+    ) -> list[TargetAsset]:
+        return [
+            asset
+            for asset in self.eligible_for(tool_name)
+            if not self.was_attempted(
+                tool_name,
+                asset.value,
+            )
+        ]

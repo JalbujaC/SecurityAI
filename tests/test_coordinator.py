@@ -7,6 +7,7 @@ from agent.planner import AgentPlanner
 
 from models.clients import ModelClient
 from models.schemas import ModelRequest, ModelResponse
+from models.schemas import AnalysisResult
 
 from scope.schemas import ScopeConfig
 from scope.targets import TargetManager
@@ -15,8 +16,10 @@ from scope.validator import ScopeValidator
 from storage import evidence_store
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
+from tools.schemas import ToolResult
 
 from storage.evidence_store import EvidenceStore
+from agent.core import SecurityAI
 
 
 class CoordinatorTestModel(ModelClient):
@@ -294,3 +297,449 @@ def test_coordinator_stores_tool_result_as_evidence():
     assert record.tool_name == "mock_recon"
     assert record.target == "example.com"
     assert record.success is True
+
+
+def test_httpx_batch_is_bounded_and_prioritized(
+    monkeypatch,
+):
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    target_manager = TargetManager(
+        scope_validator=scope_validator
+    )
+
+    target_manager.add_root(
+        "example.com"
+    )
+
+    for index in range(20):
+        target_manager.add_discovered(
+            f"host{index}.example.com",
+            source="subfinder",
+        )
+
+    target_manager.add_discovered(
+        "auth.example.com",
+        source="subfinder",
+    )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class FakeHttpxTool:
+        name = "httpx"
+
+        def run(
+            self,
+            request,
+        ):
+            return ToolResult(
+                tool_name="httpx",
+                target=request.target,
+                success=True,
+                output={
+                    "targets_received": request.targets,
+                    "results": [],
+                    "count": 0,
+                },
+            )
+
+    registry.register(
+        FakeHttpxTool()
+    )
+
+    class HttpxDecisionModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "RUN_TOOL",
+                        "reasoning": "Probe web services.",
+                        "tool_action": {
+                            "tool_name": "httpx",
+                            "target": "example.com",
+                            "arguments": {},
+                            "reason": "Identify live services.",
+                        },
+                    }
+                ),
+                model="test-model",
+            )
+
+    planner = AgentPlanner(
+        HttpxDecisionModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+        target_manager=target_manager,
+    )
+
+    target_map = (
+        target_manager.planner_targets(
+            registry.list_tools()
+        )
+    )
+
+    decision, result = coordinator.run_once(
+        observation="Test HTTPX batching.",
+        available_tools=registry.list_tools(),
+        target_map=target_map,
+    )
+
+    received = (
+        result.output[
+            "targets_received"
+        ]
+    )
+
+    assert len(received) == 10
+
+    assert (
+        "auth.example.com"
+        in received
+    )
+
+def test_httpx_second_batch_does_not_repeat_targets():
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    target_manager = TargetManager(
+        scope_validator=scope_validator
+    )
+
+    target_manager.add_root(
+        "example.com"
+    )
+
+    for index in range(25):
+        target_manager.add_discovered(
+            f"host{index}.example.com",
+            source="subfinder",
+        )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class FakeHttpxTool:
+        name = "httpx"
+
+        def run(
+            self,
+            request,
+        ):
+            return ToolResult(
+                tool_name="httpx",
+                target=request.target,
+                success=True,
+                output={
+                    "targets_received": list(
+                        request.targets
+                    ),
+                    "results": [],
+                    "count": 0,
+                },
+            )
+
+    registry.register(
+        FakeHttpxTool()
+    )
+
+    class AlwaysHttpxModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "RUN_TOOL",
+                        "reasoning": "Continue probing.",
+                        "tool_action": {
+                            "tool_name": "httpx",
+                            "target": "example.com",
+                            "arguments": {},
+                            "reason": "Identify live services.",
+                        },
+                    }
+                ),
+                model="test-model",
+            )
+
+    planner = AgentPlanner(
+        AlwaysHttpxModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+        target_manager=target_manager,
+    )
+
+    target_map = (
+        target_manager.planner_targets(
+            registry.list_tools()
+        )
+    )
+
+    _, first_result = coordinator.run_once(
+        observation="Probe targets.",
+        available_tools=registry.list_tools(),
+        target_map=target_map,
+    )
+
+    _, second_result = coordinator.run_once(
+        observation="Probe targets.",
+        available_tools=registry.list_tools(),
+        target_map=target_map,
+    )
+
+    first_targets = set(
+        first_result.output[
+            "targets_received"
+        ]
+    )
+
+    second_targets = set(
+        second_result.output[
+            "targets_received"
+        ]
+    )
+
+    assert len(first_targets) == 10
+    assert len(second_targets) == 10
+
+    assert first_targets.isdisjoint(
+        second_targets
+    )
+
+def test_analyze_decision_invokes_security_analyzer():
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    target_manager = TargetManager(
+        scope_validator=scope_validator
+    )
+
+    target_manager.add_root(
+        "example.com"
+    )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class AnalyzeDecisionModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "ANALYZE",
+                        "reasoning": (
+                            "Enough evidence exists "
+                            "for structured analysis."
+                        ),
+                        "tool_action": None,
+                    }
+                ),
+                model="planner-test",
+            )
+
+    class AnalysisModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "status": "HYPOTHESIS",
+                        "summary": (
+                            "A test observation "
+                            "requires validation."
+                        ),
+                        "confidence": 0.4,
+                        "evidence": [
+                            "Observed HTTP response."
+                        ],
+                        "hypotheses": [
+                            (
+                                "A possible issue "
+                                "may require validation."
+                            )
+                        ],
+                        "recommended_next_step": (
+                            "Perform a controlled "
+                            "verification step."
+                        ),
+                    }
+                ),
+                model="analysis-test",
+            )
+
+    planner = AgentPlanner(
+        AnalyzeDecisionModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    analyzer = SecurityAI(
+        AnalysisModel()
+    )
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+        target_manager=target_manager,
+        analyzer=analyzer,
+    )
+
+    history = coordinator.run(
+        observation=(
+            "Analyze authorized target "
+            "example.com."
+        ),
+        available_tools=[],
+        max_steps=3,
+    )
+
+    assert len(history) == 1
+
+    assert (
+        history[0].decision.action
+        == "ANALYZE"
+    )
+
+    assert isinstance(
+        history[0].result,
+        AnalysisResult,
+    )
+
+    assert (
+        history[0].result.status
+        == "HYPOTHESIS"
+    )
+
+    assert (
+        history[0].result.confidence
+        == 0.4
+    )
+
+    assert len(
+        history[0].result.hypotheses
+    ) == 1
+
+
+def test_analyze_without_analyzer_stops_cleanly():
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class AnalyzeDecisionModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "ANALYZE",
+                        "reasoning": "Analyze evidence.",
+                        "tool_action": None,
+                    }
+                ),
+                model="test-model",
+            )
+
+    planner = AgentPlanner(
+        AnalyzeDecisionModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+    )
+
+    history = coordinator.run(
+        observation="Test.",
+        available_tools=[],
+    )
+
+    assert len(history) == 1
+    assert history[0].decision.action == "ANALYZE"
+    assert history[0].result is None

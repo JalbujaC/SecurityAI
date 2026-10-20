@@ -142,3 +142,69 @@ def test_httpx_handles_timeout(monkeypatch):
 
     assert result.success is False
     assert "timed out" in result.error.lower()
+
+def test_httpx_accepts_multiple_targets(
+    monkeypatch,
+):
+    scope = ScopeConfig(
+        allowed_domains=["example.com"]
+    )
+
+    validator = ScopeValidator(
+        scope
+    )
+
+    tool = HttpxTool(
+        scope_validator=validator
+    )
+
+    captured_command = []
+
+    class FakeProcess:
+        returncode = 0
+        stderr = ""
+        stdout = (
+            '{"url":"https://api.example.com",'
+            '"status_code":200,'
+            '"title":"API",'
+            '"tech":[]}\n'
+            '{"url":"https://auth.example.com",'
+            '"status_code":200,'
+            '"title":"Auth",'
+            '"tech":[]}\n'
+        )
+
+    def fake_run(
+        command,
+        **kwargs,
+    ):
+        captured_command.extend(
+            command
+        )
+
+        return FakeProcess()
+
+    monkeypatch.setattr(
+        subprocess,
+        "run",
+        fake_run,
+    )
+
+    request = ToolRequest(
+        tool_name="httpx",
+        target="example.com",
+        targets=[
+            "api.example.com",
+            "auth.example.com",
+        ],
+    )
+
+    result = tool.run(
+        request
+    )
+
+    assert result.success is True
+    assert result.output["count"] == 2
+
+    assert "api.example.com" in captured_command
+    assert "auth.example.com" in captured_command

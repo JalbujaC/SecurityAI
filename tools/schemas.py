@@ -6,6 +6,7 @@ class ToolRequest:
     tool_name: str
     target: str
     arguments: dict[str, Any] = field(default_factory=dict)
+    targets: list[str] = field(default_factory=list)
 
 @dataclass
 class ToolResult:
@@ -14,3 +15,4 @@ class ToolResult:
     success: bool
     output: Any = None
     error: str | None = None
+

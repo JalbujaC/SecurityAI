@@ -5,9 +5,16 @@ from storage.evidence_store import EvidenceStore
 
 from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
-from models.schemas import AgentDecision, ExecutionRecord
+
 from tools.schemas import ToolResult
 from scope.targets import TargetManager
+
+from agent.core import SecurityAI
+from models.schemas import (
+    AgentDecision,
+    AnalysisResult,
+    ExecutionRecord
+)
 
 class AgentCoordinator:
     """
@@ -16,17 +23,21 @@ class AgentCoordinator:
     This is intentionally NOT an autonomous loop.
     """
 
+    HTTPX_BATCH_SIZE = 10   
+
     def __init__(
         self,
         planner: AgentPlanner,
         executor: AgentExecutor,
         target_manager: TargetManager | None = None,
         evidence_store: EvidenceStore | None = None,
+        analyzer: SecurityAI | None = None 
     ):
         self.planner = planner
         self.executor = executor
         self.target_manager = target_manager
         self.evidence_store = evidence_store
+        self.analyzer = analyzer
 
     def run_once(
         self,
@@ -43,9 +54,40 @@ class AgentCoordinator:
             target_map=target_map
         )
 
+        execution_targets = None
+        
+        if (
+            decision.action == "RUN_TOOL"
+            and decision.tool_action is not None
+            and decision.tool_action.tool_name == "httpx"
+            and self.target_manager is not None
+        ):
+            eligible = (
+                self.target_manager.unattempted_for(
+                    "httpx"
+                )
+            )
+
+            execution_targets = [
+                asset.value
+                for asset in eligible[
+                    :self.HTTPX_BATCH_SIZE
+                ]
+            ]
+
         result = self.executor.execute(
-            decision
+            decision,
+            targets=execution_targets,
         )
+
+        if (
+            self.target_manager is not None
+            and execution_targets
+        ):
+            self.target_manager.mark_attempted(
+                decision.tool_action.tool_name,
+                execution_targets,
+            )
 
         return decision, result
     
@@ -88,6 +130,24 @@ class AgentCoordinator:
                 break
 
             if decision.action == "ANALYZE":
+                if self.analyzer is not None:
+                    analysis_input = (
+                        self._build_analysis_input(
+                            observation=observation,
+                            evidence=evidence,
+                        )
+                    )
+
+                    analysis_result = (
+                        self.analyzer.analyze(
+                            analysis_input
+                        )
+                    )
+
+                    history[-1].result = (
+                        analysis_result
+                    )
+
                 break
 
             if result is None:
@@ -116,6 +176,45 @@ class AgentCoordinator:
             )
 
         return history
+
+    def _build_analysis_input(
+        self,
+        observation: str,
+        evidence: list[str],
+    ) -> str:
+        sections = [
+            "Original research objective:",
+            observation,
+            "",
+            "Collected evidence:",
+        ]
+
+        if evidence:
+            sections.extend(
+                evidence
+            )
+        else:
+            sections.append(
+                "No tool evidence was collected."
+            )
+
+        sections.extend(
+            [
+                "",
+                (
+                    "Analyze only the evidence above. "
+                    "Do not treat scanner output, "
+                    "technology identification, open "
+                    "ports, redirects, discovered "
+                    "endpoints, or unusual hostnames "
+                    "as vulnerabilities by themselves."
+                ),
+            ]
+        )
+
+        return "\n".join(
+            sections
+        )
 
     def _summarize_result(
         self,

@@ -194,3 +194,130 @@ def test_planner_targets_are_grouped_by_tool(manager):
         "https://api.example.com"
         in targets["katana"]
     )
+
+def test_httpx_targets_are_prioritized(manager):
+    manager.add_root(
+        "example.com"
+    )
+
+    manager.add_discovered(
+        "static.example.com",
+        source="subfinder",
+    )
+
+    manager.add_discovered(
+        "auth.example.com",
+        source="subfinder",
+    )
+
+    targets = manager.eligible_for(
+        "httpx"
+    )
+
+    values = [
+        asset.value
+        for asset in targets
+    ]
+
+    assert (
+        values.index("auth.example.com")
+        < values.index("static.example.com")
+    )
+
+def test_target_can_be_marked_attempted(manager):
+    manager.add_root(
+        "example.com"
+    )
+
+    manager.mark_attempted(
+        "httpx",
+        [
+            "example.com",
+        ],
+    )
+
+    assert manager.was_attempted(
+        "httpx",
+        "example.com",
+    )
+
+
+def test_attempted_state_is_per_tool(manager):
+    manager.add_root(
+        "example.com"
+    )
+
+    manager.mark_attempted(
+        "httpx",
+        [
+            "example.com",
+        ],
+    )
+
+    assert manager.was_attempted(
+        "httpx",
+        "example.com",
+    )
+
+    assert not manager.was_attempted(
+        "subfinder",
+        "example.com",
+    )
+
+
+def test_unattempted_targets_exclude_previous_attempts(
+    manager,
+):
+    manager.add_root(
+        "example.com"
+    )
+
+    manager.add_discovered(
+        "auth.example.com",
+        source="subfinder",
+    )
+
+    manager.add_discovered(
+        "api.example.com",
+        source="subfinder",
+    )
+
+    manager.mark_attempted(
+        "httpx",
+        [
+            "example.com",
+            "auth.example.com",
+        ],
+    )
+
+    remaining = manager.unattempted_for(
+        "httpx"
+    )
+
+    values = [
+        asset.value
+        for asset in remaining
+    ]
+
+    assert "example.com" not in values
+    assert "auth.example.com" not in values
+    assert "api.example.com" in values
+
+def test_discovery_does_not_overwrite_root_asset(
+    manager,
+):
+    manager.add_root(
+        "example.com"
+    )
+
+    manager.add_discovered(
+        "example.com",
+        source="naabu",
+    )
+
+    roots = manager.roots()
+
+    assert len(roots) == 1
+    assert roots[0].value == "example.com"
+    assert roots[0].kind == "root_domain"
+    assert roots[0].source == "scope"

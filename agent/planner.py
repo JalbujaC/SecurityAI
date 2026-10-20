@@ -151,10 +151,7 @@ class AgentPlanner:
             tool_action = ToolAction(
                 tool_name=tool_name,
                 target=selected_target,
-                arguments=tool_data.get(
-                    "arguments",
-                    {},
-                ),
+                arguments={},
                 reason=tool_data.get(
                     "reason",
                     "",
