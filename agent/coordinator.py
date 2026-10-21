@@ -1,10 +1,14 @@
 import json
 
+from storage import finding_store
 from storage.evidence import EvidenceRecord
 from storage.evidence_store import EvidenceStore
 
 from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
+
+from agent.finding_builder import FindingBuilder
+from storage.finding_store import FindingStore
 
 from tools.schemas import ToolResult
 from scope.targets import TargetManager
@@ -31,13 +35,15 @@ class AgentCoordinator:
         executor: AgentExecutor,
         target_manager: TargetManager | None = None,
         evidence_store: EvidenceStore | None = None,
-        analyzer: SecurityAI | None = None 
+        analyzer: SecurityAI | None = None,
+        finding_store: FindingStore | None = None
     ):
         self.planner = planner
         self.executor = executor
         self.target_manager = target_manager
         self.evidence_store = evidence_store
         self.analyzer = analyzer
+        self.finding_store = finding_store
 
     def run_once(
         self,
@@ -100,6 +106,7 @@ class AgentCoordinator:
 
         history: list[ExecutionRecord] = []
         evidence: list[str] = []
+        evidence_ids: list[str] = []
 
         for step in range(1, max_steps + 1):
             if self.target_manager is not None:
@@ -148,6 +155,26 @@ class AgentCoordinator:
                         analysis_result
                     )
 
+                    if self.finding_store is not None:
+                        analysis_target = (
+                            self._select_analysis_target(
+                                history
+                            )
+                        )
+
+                        findings = (
+                            FindingBuilder.from_analysis(
+                                analysis=analysis_result,
+                                target=analysis_target,
+                                evidence_ids=evidence_ids
+                            )
+                        )
+
+                        for finding in findings:
+                            self.finding_store.add(
+                                finding
+                            )
+
                 break
 
             if result is None:
@@ -157,11 +184,20 @@ class AgentCoordinator:
                 self.evidence_store is not None
                 and result is not None
             ):
-                self.evidence_store.add(
+                evidence_record = (
                     EvidenceRecord.from_tool_result(
                         result
                     )
-                )           
+                )
+
+                self.evidence_store.add(
+                    evidence_record
+                )
+
+                evidence_ids.append(
+                    evidence_record.evidence_id
+                )
+                        
             if (
                 self.target_manager is not None
                 and result.success
@@ -176,6 +212,31 @@ class AgentCoordinator:
             )
 
         return history
+
+
+    def _select_analysis_target(
+        self,
+        history: list[ExecutionRecord],
+    ) -> str:
+        for record in reversed(
+            history[:-1]
+        ):
+            if isinstance(
+                record.result,
+                ToolResult,
+            ):
+                return record.result.target
+
+        if self.target_manager is not None:
+            roots = (
+                self.target_manager.roots()
+            )
+
+            if roots:
+                return roots[0].value
+
+        return "unknown"
+
 
     def _build_analysis_input(
         self,

@@ -35,6 +35,18 @@ class EvidenceStore:
     def count(self) -> int:
         return len(self._records)
 
+    def get(
+        self,
+        evidence_id: str,
+    ) -> EvidenceRecord:
+        for record in self._records:
+            if record.evidence_id == evidence_id:
+                return record
+
+        raise KeyError(
+            f"Unknown evidence: {evidence_id}"
+        )
+
     def by_tool(
         self,
         tool_name: str,

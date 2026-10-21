@@ -13,6 +13,7 @@ from scope.schemas import ScopeConfig
 from scope.targets import TargetManager
 from scope.validator import ScopeValidator
 
+from storage.finding_store import FindingStore
 from storage import evidence_store
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
@@ -743,3 +744,209 @@ def test_analyze_without_analyzer_stops_cleanly():
     assert len(history) == 1
     assert history[0].decision.action == "ANALYZE"
     assert history[0].result is None
+
+def test_analysis_creates_finding_in_store():
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    target_manager = TargetManager(
+        scope_validator=scope_validator
+    )
+
+    target_manager.add_root(
+        "example.com"
+    )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class AnalyzeDecisionModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "ANALYZE",
+                        "reasoning": (
+                            "Evidence is ready "
+                            "for analysis."
+                        ),
+                        "tool_action": None,
+                    }
+                ),
+                model="planner-test",
+            )
+
+    class AnalysisModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "status": "HYPOTHESIS",
+                        "summary": (
+                            "Observed behavior "
+                            "requires verification."
+                        ),
+                        "confidence": 0.8,
+                        "evidence": [
+                            "Observed response behavior."
+                        ],
+                        "hypotheses": [
+                            "Possible authorization issue."
+                        ],
+                        "recommended_next_step": (
+                            "Perform controlled verification."
+                        ),
+                    }
+                ),
+                model="analysis-test",
+            )
+
+    planner = AgentPlanner(
+        AnalyzeDecisionModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    analyzer = SecurityAI(
+        AnalysisModel()
+    )
+
+    finding_store = FindingStore()
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+        target_manager=target_manager,
+        analyzer=analyzer,
+        finding_store=finding_store,
+    )
+
+    coordinator.run(
+        observation=(
+            "Analyze example.com."
+        ),
+        available_tools=[],
+    )
+
+    assert finding_store.count() == 1
+
+    finding = finding_store.all()[0]
+
+    assert (
+        finding.target
+        == "example.com"
+    )
+
+    assert finding.status == "hypothesis"
+
+    assert finding.confidence == 0.8
+
+def test_weak_analysis_does_not_create_finding():
+    scope = ScopeConfig(
+        allowed_domains=[
+            "example.com"
+        ]
+    )
+
+    scope_validator = ScopeValidator(
+        scope
+    )
+
+    registry = ToolRegistry(
+        scope_validator=scope_validator
+    )
+
+    class AnalyzeDecisionModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "action": "ANALYZE",
+                        "reasoning": "Analyze.",
+                        "tool_action": None,
+                    }
+                ),
+                model="planner-test",
+            )
+
+    class WeakAnalysisModel(ModelClient):
+        def generate(
+            self,
+            request,
+        ):
+            return ModelResponse(
+                content=json.dumps(
+                    {
+                        "status": "HYPOTHESIS",
+                        "summary": "Weak signal.",
+                        "confidence": 0.3,
+                        "evidence": [
+                            "HTTP service exists."
+                        ],
+                        "hypotheses": [
+                            "Possible issue."
+                        ],
+                        "recommended_next_step": (
+                            "Gather more evidence."
+                        ),
+                    }
+                ),
+                model="analysis-test",
+            )
+
+    planner = AgentPlanner(
+        AnalyzeDecisionModel()
+    )
+
+    validator = ActionValidator(
+        registry
+    )
+
+    executor = AgentExecutor(
+        registry=registry,
+        validator=validator,
+    )
+
+    analyzer = SecurityAI(
+        WeakAnalysisModel()
+    )
+
+    finding_store = FindingStore()
+
+    coordinator = AgentCoordinator(
+        planner=planner,
+        executor=executor,
+        analyzer=analyzer,
+        finding_store=finding_store,
+    )
+
+    coordinator.run(
+        observation="Test.",
+        available_tools=[],
+    )
+
+    assert finding_store.count() == 0
