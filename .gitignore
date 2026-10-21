@@ -34,15 +34,21 @@ logs/
 *.sqlite
 *.sqlite3
 
-# BountyAI generated data
+# SecurityAI generated data
 data/raw/*
 data/normalized/*
 data/evidence/*
+data/findings/*
+data/state/*
+data/reports/*
 
 # Keep directory structure
 !data/raw/.gitkeep
 !data/normalized/.gitkeep
 !data/evidence/.gitkeep
+!data/findings/.gitkeep
+!data/state/.gitkeep
+!data/reports/.gitkeep
 
 # Local model files
 models/*.gguf

@@ -204,43 +204,49 @@ def test_single_eligible_target_is_bound_deterministically():
     )
 
 
-def test_multiple_targets_reject_invalid_model_target():
+def test_multiple_targets_bind_first_eligible_target():
     model = DecisionModel(
         {
             "action": "RUN_TOOL",
-            "reasoning": "Probe target.",
+            "reasoning": "Probe a target.",
             "tool_action": {
                 "tool_name": "httpx",
-                "target": "evil.com",
+                "target": "wrong.example.com",
                 "arguments": {},
-                "reason": "Probe HTTP.",
+                "reason": "Probe HTTP service.",
             },
         }
     )
 
-    planner = AgentPlanner(model)
+    planner = AgentPlanner(
+        model
+    )
 
-    with pytest.raises(
-        ValueError,
-        match="Model proposed invalid target",
-    ):
-        planner.decide(
-            observation="Test target validation.",
-            available_tools=["httpx"],
-            target_map={
-                "httpx": [
-                    "example.com",
-                    "api.example.com",
-                ]
-            },
-        )
+    decision = planner.decide(
+        observation="Test.",
+        available_tools=[
+            "httpx"
+        ],
+        target_map={
+            "httpx": [
+                "auth.example.com",
+                "api.example.com",
+            ]
+        },
+    )
 
+    assert decision.tool_action is not None
 
-def test_tool_cannot_use_target_from_another_tools_pool():
+    assert (
+        decision.tool_action.target
+        == "auth.example.com"
+    )
+
+def test_tool_cannot_escape_its_own_target_pool():
     model = DecisionModel(
         {
             "action": "RUN_TOOL",
-            "reasoning": "Crawl application.",
+            "reasoning": "Crawl target.",
             "tool_action": {
                 "tool_name": "katana",
                 "target": "example.com",
@@ -250,29 +256,37 @@ def test_tool_cannot_use_target_from_another_tools_pool():
         }
     )
 
-    planner = AgentPlanner(model)
+    planner = AgentPlanner(
+        model
+    )
 
-    with pytest.raises(
-        ValueError,
-        match="Model proposed invalid target",
-    ):
-        planner.decide(
-            observation="Test tool target pairing.",
-            available_tools=[
-                "subfinder",
-                "katana",
+    decision = planner.decide(
+        observation="Test.",
+        available_tools=[
+            "httpx",
+            "katana",
+        ],
+        target_map={
+            "httpx": [
+                "example.com",
             ],
-            target_map={
-                "subfinder": [
-                    "example.com",
-                ],
-                "katana": [
-                    "https://example.com",
-                    "https://api.example.com",
-                ],
-            },
-        )
+            "katana": [
+                "https://app.example.com",
+            ],
+        },
+    )
 
+    assert decision.tool_action is not None
+
+    assert (
+        decision.tool_action.tool_name
+        == "katana"
+    )
+
+    assert (
+        decision.tool_action.target
+        == "https://app.example.com"
+    )
 
 def test_tool_without_eligible_targets_is_rejected():
     model = DecisionModel(

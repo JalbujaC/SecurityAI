@@ -1,8 +1,14 @@
+import json
+from dataclasses import asdict
+
+from reporting.review import HumanReviewGate
 from agent.action_validator import ActionValidator
 from agent.coordinator import AgentCoordinator
 from agent.executor import AgentExecutor
 from agent.planner import AgentPlanner
-
+from agent.core import SecurityAI
+from agent.validation_coordinator import ValidationCoordinator
+from agent.validation_executor import ValidationExecutor
 from models.ollama import OllamaClient
 
 from scope.schemas import ScopeConfig
@@ -25,6 +31,9 @@ ACTIVE_APPROVAL_TOOLS = {
     "nuclei_dast",
 }
 
+ENABLE_HUMAN_REVIEW = False
+
+IMPACT_SUMMARIES: dict[str, str] = {}
 
 def main():
     scope = ScopeConfig(
@@ -77,6 +86,9 @@ def main():
         model_name="qwen3:8b",
         timeout=300,
     )
+    analyzer = SecurityAI(
+        model
+    )
 
     planner = AgentPlanner(
         model=model
@@ -91,11 +103,26 @@ def main():
         validator=validator,
     )
 
+    validation_executor = ValidationExecutor(
+        executor
+    )
+
+    validation_coordinator = ValidationCoordinator(
+        finding_store=finding_store,
+        executor=validation_executor,
+    )
+
+    human_review = HumanReviewGate(
+        finding_store
+    )
+
     coordinator = AgentCoordinator(
         planner=planner,
         executor=executor,
         target_manager=target_manager,
         evidence_store=evidence_store,
+        analyzer=analyzer,
+        finding_store=finding_store
     )
 
     observation = (
@@ -112,9 +139,81 @@ def main():
         max_steps=MAX_STEPS,
     )
 
+    for finding in finding_store.all():
+        if finding.status != "hypothesis":
+            continue
+
+        result = validation_coordinator.validate(
+            finding_id=finding.finding_id,
+            available_tools=available_tools,
+            approved=False,
+        )
+
+        if result is not None:
+            print()
+            print(
+                f"Validation result for "
+                f"{finding.finding_id}:"
+            )
+            print(result)
+
+
+    report_candidates = []
+
+    if ENABLE_HUMAN_REVIEW:
+        for finding in finding_store.all():
+            if finding.status != "validated":
+                continue
+
+            impact_summary = (
+                IMPACT_SUMMARIES.get(
+                    finding.finding_id
+                )
+            )
+
+            if not impact_summary:
+                continue
+
+            candidate = human_review.approve(
+                finding_id=finding.finding_id,
+                impact_summary=impact_summary,
+            )
+
+            report_candidates.append(
+                candidate
+            )
+
     run_state_store.save(
         target_manager
     )
+
+    if report_candidates:
+        report_path = (
+            "data/reports/live_test.json"
+        )
+
+        from pathlib import Path
+
+        path = Path(
+            report_path
+        )
+
+        path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        path.write_text(
+            json.dumps(
+                [
+                    asdict(candidate)
+                    for candidate
+                    in report_candidates
+                ],
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
 
     print()
     print("=" * 70)
@@ -151,6 +250,24 @@ def main():
         f"{finding_store.count()}"
     )
 
+    print(
+        f"Report candidates created: "
+        f"{len(report_candidates)}"
+    )
+
+    if finding_store.count() > 0:
+        print()
+        print("Findings:")
+
+        for finding in finding_store.all():
+            print(
+                f"- [{finding.status}] "
+                f"{finding.finding_id} "
+                f"{finding.title} "
+                f"(target={finding.target}, "
+                f"confidence={finding.confidence:.2f})"
+            )
+
     print()
     print("Known targets:")
 
@@ -171,6 +288,11 @@ def main():
         "data/state/live_test.json"
     )
 
+    if report_candidates:
+        print(
+            "Report candidate file: "
+            "data/reports/live_test.json"
+        )
 
 if __name__ == "__main__":
     main()
