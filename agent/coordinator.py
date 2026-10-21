@@ -171,7 +171,7 @@ class AgentCoordinator:
                         )
 
                         for finding in findings:
-                            self.finding_store.add(
+                            self.finding_store.add_or_merge(
                                 finding
                             )
 

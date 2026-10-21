@@ -18,6 +18,7 @@ from storage import evidence_store
 from tools.mock import MockReconTool
 from tools.registry import ToolRegistry
 from tools.schemas import ToolResult
+from agent.finding_builder import FindingBuilder, FindingRecord
 
 from storage.evidence_store import EvidenceStore
 from agent.core import SecurityAI
@@ -950,3 +951,51 @@ def test_weak_analysis_does_not_create_finding():
     )
 
     assert finding_store.count() == 0
+
+def test_repeated_analysis_does_not_duplicate_finding():
+    finding_store = FindingStore()
+
+    first = FindingRecord(
+        finding_id="same-id",
+        title="Possible issue",
+        target="example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence1"
+        ],
+        confidence=0.6,
+    )
+
+    second = FindingRecord(
+        finding_id="same-id",
+        title="Possible issue",
+        target="example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence2"
+        ],
+        confidence=0.9,
+    )
+
+    finding_store.add_or_merge(
+        first
+    )
+
+    finding_store.add_or_merge(
+        second
+    )
+
+    assert finding_store.count() == 1
+
+    stored = finding_store.get(
+        "same-id"
+    )
+
+    assert stored.confidence == 0.9
+
+    assert stored.evidence_ids == [
+        "evidence1",
+        "evidence2",
+    ]

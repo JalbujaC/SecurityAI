@@ -256,3 +256,56 @@ class TargetManager:
                 asset.value,
             )
         ]
+
+    def export_state(self) -> dict:
+        return {
+            "targets": [
+                {
+                    "value": asset.value,
+                    "kind": asset.kind,
+                    "source": asset.source,
+                }
+                for asset in self._targets.values()
+            ],
+            "attempted": {
+                tool_name: sorted(targets)
+                for tool_name, targets
+                in self._attempted.items()
+            },
+        }
+
+
+    def import_state(
+        self,
+        state: dict,
+    ) -> None:
+        self._targets = {}
+        self._attempted = {}
+
+        for item in state.get(
+            "targets",
+            [],
+        ):
+            self.scope_validator.validate(
+                item["value"]
+            )
+
+            asset = TargetAsset(
+                value=item["value"],
+                kind=item["kind"],
+                source=item["source"],
+            )
+
+            self._targets[
+                asset.value
+            ] = asset
+
+        for tool_name, targets in state.get(
+            "attempted",
+            {}
+        ).items():
+            self._attempted[
+                tool_name
+            ] = set(
+                targets
+            )

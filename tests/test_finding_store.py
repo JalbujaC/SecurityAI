@@ -190,3 +190,114 @@ def test_rejected_finding_cannot_be_reopened():
             "finding-001",
             "needs_validation",
         )
+
+from storage.findings import FindingRecord
+
+
+def test_add_or_merge_adds_new_finding():
+    store = FindingStore()
+
+    finding = FindingRecord(
+        finding_id="abc123",
+        title="Possible issue",
+        target="api.example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        summary="Test finding.",
+        evidence_ids=[
+            "evidence1"
+        ],
+        confidence=0.7,
+    )
+
+    result = store.add_or_merge(
+        finding
+    )
+
+    assert store.count() == 1
+    assert result.finding_id == "abc123"
+
+
+def test_add_or_merge_deduplicates_finding():
+    store = FindingStore()
+
+    first = FindingRecord(
+        finding_id="abc123",
+        title="Possible issue",
+        target="api.example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence1"
+        ],
+        confidence=0.6,
+    )
+
+    second = FindingRecord(
+        finding_id="abc123",
+        title="Possible issue",
+        target="api.example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence2"
+        ],
+        confidence=0.8,
+    )
+
+    store.add_or_merge(
+        first
+    )
+
+    result = store.add_or_merge(
+        second
+    )
+
+    assert store.count() == 1
+
+    assert result.confidence == 0.8
+
+    assert result.evidence_ids == [
+        "evidence1",
+        "evidence2",
+    ]
+
+
+def test_add_or_merge_does_not_duplicate_evidence():
+    store = FindingStore()
+
+    first = FindingRecord(
+        finding_id="abc123",
+        title="Possible issue",
+        target="api.example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence1"
+        ],
+        confidence=0.7,
+    )
+
+    second = FindingRecord(
+        finding_id="abc123",
+        title="Possible issue",
+        target="api.example.com",
+        vulnerability_class="unclassified",
+        status="hypothesis",
+        evidence_ids=[
+            "evidence1"
+        ],
+        confidence=0.7,
+    )
+
+    store.add_or_merge(
+        first
+    )
+
+    result = store.add_or_merge(
+        second
+    )
+
+    assert result.evidence_ids == [
+        "evidence1"
+    ]
