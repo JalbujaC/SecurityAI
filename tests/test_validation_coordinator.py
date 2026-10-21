@@ -189,3 +189,67 @@ def test_negative_validation_rejects_finding():
         ).status
         == "rejected"
     )
+
+def test_validation_stops_after_max_attempts():
+    store = FindingStore()
+
+    store.add(
+        FindingRecord(
+            finding_id="abc123",
+            title="Possible issue",
+            target="example.com",
+            vulnerability_class="unclassified",
+            status="hypothesis",
+        )
+    )
+
+    class FailingExecutor:
+        def __init__(self):
+            self.calls = 0
+
+        def execute(
+            self,
+            plan,
+            approved=False,
+        ):
+            self.calls += 1
+
+            return ToolResult(
+                tool_name=plan.tool_name,
+                target=plan.target,
+                success=False,
+                output=None,
+                error="timeout",
+            )
+
+    executor = FailingExecutor()
+
+    coordinator = ValidationCoordinator(
+        finding_store=store,
+        executor=executor,
+    )
+
+    coordinator.validate(
+        finding_id="abc123",
+        available_tools=[
+            "nuclei"
+        ],
+    )
+
+    coordinator.validate(
+        finding_id="abc123",
+        available_tools=[
+            "nuclei"
+        ],
+    )
+
+    result = coordinator.validate(
+        finding_id="abc123",
+        available_tools=[
+            "nuclei"
+        ],
+    )
+
+    assert result is None
+
+    assert executor.calls == 2

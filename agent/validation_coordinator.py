@@ -3,6 +3,8 @@ from agent.validation_planner import ValidationPlanner
 from storage.finding_store import FindingStore
 from tools.schemas import ToolResult
 
+from agent.retry_policy import RetryPolicy
+
 from agent.validation_result import (
     ValidationResultInterpreter,
 )
@@ -16,9 +18,13 @@ class ValidationCoordinator:
         self,
         finding_store: FindingStore,
         executor: ValidationExecutor,
+        retry_policy: RetryPolicy | None = None
     ):
         self.finding_store = finding_store
         self.executor = executor
+        self.retry_policy = (
+            retry_policy or RetryPolicy()
+        )
 
     def validate(
         self,
@@ -48,6 +54,27 @@ class ValidationCoordinator:
         )
 
         if plan is None:
+            return None
+
+        if not self.retry_policy.can_retry(
+            plan.tool_name,
+            plan.target,
+        ):
+            return None
+
+        self.retry_policy.record_attempt(
+            plan.tool_name,
+            plan.target,
+        )
+
+        if (
+            plan.requires_approval
+            and self.retry_policy.attempts_for(
+                plan.tool_name,
+                plan.target,
+            ) > 0
+            and not approved
+        ):
             return None
 
         result = self.executor.execute(

@@ -122,7 +122,6 @@ class AgentPlanner:
                     "RUN_TOOL requires tool_action."
                 )
 
-            model_target = tool_data.get("target", "")
             tool_name = tool_data.get("tool_name", "")
             allowed_targets = target_map.get(
                 tool_name, 
@@ -134,19 +133,11 @@ class AgentPlanner:
                     f"No eligible targets available for tool: "
                     f"{tool_name}"
                 )
-            if len(allowed_targets) == 1:
-                selected_target = allowed_targets[0]
 
-            elif allowed_targets:
-                if model_target not in allowed_targets:
-                    raise ValueError(
-                        f"Model proposed invalid target: {model_target}"
-                    )
-
-                selected_target = model_target
-
-            else:
-                selected_target = model_target
+            # The model chooses the tool.
+            # SecurityAI deterministically chooses the highest-priority
+            # eligible target for that tool.
+            selected_target = allowed_targets[0]
 
             tool_action = ToolAction(
                 tool_name=tool_name,

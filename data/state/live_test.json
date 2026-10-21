@@ -1,0 +1,803 @@
+{
+  "targets": [
+    {
+      "value": "hytale.com",
+      "kind": "root_domain",
+      "source": "scope"
+    },
+    {
+      "value": "account-api.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-api.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-data.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-data.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-front.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-front.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-front.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "account-risk.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "accounts-admin.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "accounts.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "agentk.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "agentk.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "agentk.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "amp-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "amp-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-dev.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-prod.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-prod.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-prod.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-web.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ams-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "analytics-dev.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "analytics.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev-web.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev-web.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.loginwith.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.pushgateway.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-dev.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-prod.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-prod.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-prod.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-prod.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-web.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ash-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "backend.accounts.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "benchmark-server.dev.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "cdn.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "connect.accounts.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-dev-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-dev-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-dev.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-prod.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-prod.loginwith.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-prod.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dal-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "dev.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "devwiki.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "discord.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "downloader.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "emails.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "emails.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev.analytics.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev.loginwith.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-prod.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-prod.loginwith.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-prod.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-web.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "ewr-web.webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "game-patches.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "globaladmin.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "hydra-admin.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "hydra-connect-admin.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "internal.game-patches.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "keycloak.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "launcher.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "liveconfig.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "liveconfig.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "login-spa.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "login-spa.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "login-spa.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "loginwith.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "mail.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "matchmaking.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "matchmaking.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "maven.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "minigames-moderation.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "minigames.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "mod-browser.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "nightly.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "nightly.server.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "oauth.accounts.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "open-redirect.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "open-redirect.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "open-redirect.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "payments.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "payments.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "pre-release.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "pre-release.server.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "prerelease.server.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "release.server.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-browser-dev.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-browser-dev.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-browser.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-browser.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-discovery.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server-discovery.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "server.docs.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "sessions.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "sessions.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "sns.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "social.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "social.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "socket-gateway.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "socket-gateway.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "stable.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "stable.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "stable.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "stage.game-patches.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "store.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "superpowers-secret-83649.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "support.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "team-demo.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "team-demo.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "telemetry.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "test.dal-dev.account.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "test.dal-dev.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "test.dal-dev.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "third-party-developer-apps.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "tools.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "tools.internal.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "us-central.admin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "us-central.auth.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "us-central.services.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "us-central.teleport.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "us-central.web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "web.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "webadmin.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "www.hytale.com",
+      "kind": "host",
+      "source": "subfinder"
+    },
+    {
+      "value": "https://oauth.accounts.hytale.com",
+      "kind": "url",
+      "source": "katana"
+    },
+    {
+      "value": "https://hytale.com",
+      "kind": "url",
+      "source": "httpx"
+    },
+    {
+      "value": "https://oauth.accounts.hytale.com/",
+      "kind": "url",
+      "source": "katana"
+    }
+  ],
+  "attempted": {
+    "httpx": [
+      "account-api.dal-dev.auth.hytale.com",
+      "benchmark-server.dev.admin.hytale.com",
+      "dev.admin.hytale.com",
+      "dev.auth.hytale.com",
+      "dev.services.hytale.com",
+      "hytale.com",
+      "oauth.accounts.hytale.com",
+      "test.dal-dev.account.hytale.com",
+      "test.dal-dev.auth.hytale.com",
+      "test.dal-dev.services.hytale.com"
+    ]
+  }
+}

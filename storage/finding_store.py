@@ -203,3 +203,12 @@ class FindingStore:
             finding_id,
             "needs_validation",
         )
+
+    def mark_report_candidate(
+        self,
+        finding_id: str,
+    ) -> FindingRecord:
+        return self.update_status(
+            finding_id,
+            "report_candidate",
+        )

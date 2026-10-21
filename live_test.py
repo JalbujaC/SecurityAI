@@ -8,9 +8,12 @@ from models.ollama import OllamaClient
 from scope.schemas import ScopeConfig
 from scope.targets import TargetManager
 
+from storage import finding_store
 from storage.evidence_store import EvidenceStore
 
 from tools.setup import build_tool_registry
+from storage.finding_store import FindingStore
+from storage.run_state import RunStateStore
 
 
 TARGET = "hytale.com"
@@ -47,15 +50,29 @@ def main():
         scope_validator=registry.scope_validator
     )
 
-    # Important: use the root domain here.
-    target_manager.add_root(
-        TARGET
-    )
-
     evidence_store = EvidenceStore(
         path="data/evidence/live_test.json"
     )
 
+    finding_store = FindingStore(
+        path="data/findings/live_test.json"
+    )
+
+    finding_store.load()
+
+    run_state_store = RunStateStore(
+        path="data/state/live_test.json"
+    )
+
+    run_state_store.load(
+        target_manager
+    )
+
+    # Re-assert the configured scope root after
+    # restoring persisted discovered targets.
+    target_manager.add_root(
+        TARGET
+    )
     model = OllamaClient(
         model_name="qwen3:8b",
         timeout=300,
@@ -95,6 +112,10 @@ def main():
         max_steps=MAX_STEPS,
     )
 
+    run_state_store.save(
+        target_manager
+    )
+
     print()
     print("=" * 70)
     print("SECURITYAI LIVE TEST")
@@ -125,6 +146,11 @@ def main():
         f"{evidence_store.count()}"
     )
 
+    print(
+        f"Findings stored: "
+        f"{finding_store.count()}"
+    )
+
     print()
     print("Known targets:")
 
@@ -139,6 +165,10 @@ def main():
     print(
         "Evidence file: "
         "data/evidence/live_test.json"
+    )
+    print(
+        "Run state file: "
+        "data/state/live_test.json"
     )
 
 
