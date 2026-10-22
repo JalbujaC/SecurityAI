@@ -118,13 +118,13 @@ IMPACT_SUMMARIES: dict[str, str] = {}
 # STORAGE PATHS
 # ============================================================
 
-EVIDENCE_PATH = "data/evidence/securityai.json"
-
-FINDINGS_PATH = "data/findings/securityai.json"
-
-STATE_PATH = "data/state/securityai.json"
-
-REPORT_PATH = "data/reports/securityai.json"
+# Keep each approved program's state isolated.
+import re
+RUN_KEY = re.sub(r"[^a-zA-Z0-9_.-]", "_", TARGET.lower())
+EVIDENCE_PATH = f"data/evidence/{RUN_KEY}.json"
+FINDINGS_PATH = f"data/findings/{RUN_KEY}.json"
+STATE_PATH = f"data/state/{RUN_KEY}.json"
+REPORT_PATH = f"data/reports/{RUN_KEY}.json"
 
 
 # ============================================================

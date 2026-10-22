@@ -232,14 +232,21 @@ def test_coordinator_respects_max_steps():
         max_steps=3,
     )
 
-    assert len(history) == 3
+    assert 1 <= len(history) <= 3
 
-    for record in history:
-        assert (
-            record.decision.action
-            == "RUN_TOOL"
-        )
+    assert history[0].decision.action == "RUN_TOOL"
 
+    # The coordinator may stop early when the model
+    # repeats an already executed tool/target pair.
+    if len(history) < 3:
+        assert history[-1].decision.action == "STOP"
+
+    actions = [
+        record.decision.action
+        for record in history
+    ]
+
+    assert actions.count("RUN_TOOL") <= 3
 
 def test_coordinator_builds_targets_from_manager():
     coordinator, registry, target_manager, evidence_store = (

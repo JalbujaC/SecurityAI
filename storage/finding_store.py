@@ -64,7 +64,8 @@ class FindingStore:
             self._findings[
                 finding.finding_id
             ] = finding
-
+            if self.path is not None:
+                self.save()
             return finding
 
         merged_evidence = list(

@@ -126,6 +126,7 @@ class FfufTool(SecurityTool):
                 }
             )
 
+        from analysis.redirect_noise import redirect_groups
         return ToolResult(
             tool_name=self.name,
             target=request.target,
@@ -133,5 +134,6 @@ class FfufTool(SecurityTool):
             output={
                 "findings": findings,
                 "count": len(findings),
+                "redirect_groups": redirect_groups(findings),
             },
         )

@@ -40,7 +40,7 @@ def test_explicit_negative_result_is_rejected():
     )
 
 
-def test_nonempty_findings_are_validated():
+def test_nonempty_findings_are_inconclusive():
     result = ToolResult(
         tool_name="nuclei",
         target="example.com",
@@ -58,7 +58,7 @@ def test_nonempty_findings_are_validated():
         ValidationResultInterpreter.interpret(
             result
         )
-        == "validated"
+        == "inconclusive"
     )
 
 

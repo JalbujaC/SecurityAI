@@ -71,3 +71,13 @@ dist/
 
 # OS / tooling
 .DS_Store
+# Generated SecurityAI research artifacts
+data/evidence/
+data/findings/
+data/state/
+data/reports/
+!data/evidence/.gitkeep
+!data/findings/.gitkeep
+!data/state/.gitkeep
+!data/reports/.gitkeep
+*.review-backup

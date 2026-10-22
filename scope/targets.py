@@ -209,7 +209,7 @@ class TargetManager:
         target_map: dict[str, list[str]] = {}
 
         for tool_name in tool_names:
-            assets = self.eligible_for(tool_name)
+            assets = self.unattempted_for(tool_name)
 
             target_map[tool_name] = [
                 asset.value
@@ -304,8 +304,8 @@ class TargetManager:
             "attempted",
             {}
         ).items():
-            self._attempted[
-                tool_name
-            ] = set(
-                targets
-            )
+            safe = set()
+            for target in targets:
+                self.scope_validator.validate(target)
+                safe.add(target)
+            self._attempted[tool_name] = safe

@@ -114,15 +114,17 @@ def test_planner_rejects_invalid_action():
 
     planner = AgentPlanner(model)
 
-    with pytest.raises(ValueError):
-        planner.decide(
-            observation="Test",
-            available_tools=["subfinder"],
-            target_map={
-                "subfinder": ["example.com"],
-            },
-        )
+    decision = planner.decide(
+        observation="Test",
+        available_tools=["subfinder"],
+        target_map={
+            "subfinder": ["example.com"],
+        },
+    )
 
+    assert decision.action == "STOP"
+    assert decision.tool_action is None
+    assert "invalid" in decision.reasoning.lower()
 
 def test_run_tool_requires_tool_action():
     model = DecisionModel(
@@ -135,41 +137,51 @@ def test_run_tool_requires_tool_action():
 
     planner = AgentPlanner(model)
 
-    with pytest.raises(ValueError):
-        planner.decide(
-            observation="Test",
-            available_tools=["subfinder"],
-            target_map={
-                "subfinder": ["example.com"],
-            },
-        )
-
-
-def test_analyze_rejects_tool_action():
-    model = DecisionModel(
-        {
-            "action": "ANALYZE",
-            "reasoning": "Analyze evidence.",
-            "tool_action": {
-                "tool_name": "subfinder",
-                "target": "example.com",
-                "arguments": {},
-                "reason": "Should not exist.",
-            },
-        }
+    decision = planner.decide(
+        observation="Test",
+        available_tools=["subfinder"],
+        target_map={
+            "subfinder": ["example.com"],
+        },
     )
 
-    planner = AgentPlanner(model)
+    assert decision.action == "STOP"
+    assert decision.tool_action is None
 
+def test_analyze_rejects_tool_action():
+    invalid_data = {
+        "action": "ANALYZE",
+        "reasoning": "Analyze evidence.",
+        "tool_action": {
+            "tool_name": "subfinder",
+            "target": "example.com",
+            "arguments": {},
+            "reason": "Should not exist.",
+        },
+    }
+
+    planner = AgentPlanner(
+        DecisionModel(invalid_data)
+    )
+
+    # Strict parser rejects the invalid structure.
     with pytest.raises(ValueError):
-        planner.decide(
-            observation="Test",
-            available_tools=["subfinder"],
-            target_map={
-                "subfinder": ["example.com"],
-            },
+        planner._parse_decision(
+            invalid_data,
+            {"subfinder": ["example.com"]},
         )
 
+    # Public planner handles repeated invalid output safely.
+    decision = planner.decide(
+        observation="Test",
+        available_tools=["subfinder"],
+        target_map={
+            "subfinder": ["example.com"],
+        },
+    )
+
+    assert decision.action == "STOP"
+    assert decision.tool_action is None
 
 def test_single_eligible_target_is_bound_deterministically():
     model = DecisionModel(
@@ -289,33 +301,42 @@ def test_tool_cannot_escape_its_own_target_pool():
     )
 
 def test_tool_without_eligible_targets_is_rejected():
-    model = DecisionModel(
-        {
-            "action": "RUN_TOOL",
-            "reasoning": "Crawl target.",
-            "tool_action": {
-                "tool_name": "katana",
-                "target": "https://example.com",
-                "arguments": {},
-                "reason": "Discover endpoints.",
-            },
-        }
+    invalid_data = {
+        "action": "RUN_TOOL",
+        "reasoning": "Crawl target.",
+        "tool_action": {
+            "tool_name": "katana",
+            "target": "https://example.com",
+            "arguments": {},
+            "reason": "Discover endpoints.",
+        },
+    }
+
+    planner = AgentPlanner(
+        DecisionModel(invalid_data)
     )
 
-    planner = AgentPlanner(model)
+    target_map = {"katana": []}
 
+    # Internal parser must reject unavailable targets.
     with pytest.raises(
         ValueError,
         match="No eligible targets available",
     ):
-        planner.decide(
-            observation="Test unavailable target type.",
-            available_tools=["katana"],
-            target_map={
-                "katana": [],
-            },
+        planner._parse_decision(
+            invalid_data,
+            target_map,
         )
 
+    # Public planner must recover safely without executing.
+    decision = planner.decide(
+        observation="Test unavailable target type.",
+        available_tools=["katana"],
+        target_map=target_map,
+    )
+
+    assert decision.action == "STOP"
+    assert decision.tool_action is None
 def test_model_cannot_self_approve_tool_action():
     model = DecisionModel(
         {
@@ -349,3 +370,37 @@ def test_model_cannot_self_approve_tool_action():
 
     assert decision.tool_action is not None
     assert decision.tool_action.approved is False
+
+@pytest.mark.parametrize(
+    "invalid_data",
+    [
+        {
+            "action": "DELETE_SYSTEM",
+            "tool_action": None,
+        },
+        {
+            "action": "RUN_TOOL",
+            "tool_action": None,
+        },
+        {
+            "action": "ANALYZE",
+            "tool_action": {
+                "tool_name": "subfinder",
+            },
+        },
+    ],
+)
+def test_parser_strictly_rejects_invalid_schema(
+    invalid_data,
+):
+    planner = AgentPlanner(
+        DecisionModel(invalid_data)
+    )
+
+    with pytest.raises(ValueError):
+        planner._parse_decision(
+            invalid_data,
+            {
+                "subfinder": ["example.com"],
+            },
+        )

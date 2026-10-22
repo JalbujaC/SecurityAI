@@ -10,22 +10,21 @@ class ToolRegistry:
 
     def register(self, tool: SecurityTool) -> None:
         if tool.name in self._tools:
-            raise ValueError(f"Tool already registered: {tool.name}")
-
+            raise ValueError(f'Tool already registered: {tool.name}')
         self._tools[tool.name] = tool
 
     def list_tools(self) -> list[str]:
-        return sorted(self._tools.keys())
+        return sorted(self._tools)
 
     def get(self, tool_name: str) -> SecurityTool:
         try:
             return self._tools[tool_name]
         except KeyError as exc:
-            raise KeyError(f"Unknown tool: {tool_name}") from exc
+            raise KeyError(f'Unknown tool: {tool_name}') from exc
 
     def execute(self, request: ToolRequest) -> ToolResult:
         self.scope_validator.validate(request.target)
-
-        tool = self.get(request.tool_name)
-
-        return tool.run(request)
+        # Batch scope must be checked at the same boundary, not just by a wrapper.
+        for target in request.targets:
+            self.scope_validator.validate(target)
+        return self.get(request.tool_name).run(request)

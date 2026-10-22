@@ -62,20 +62,14 @@ class ValidationCoordinator:
         ):
             return None
 
+        if plan.requires_approval and not approved:
+            # Never execute, and never consume retries before human approval.
+            return None
+
         self.retry_policy.record_attempt(
             plan.tool_name,
             plan.target,
         )
-
-        if (
-            plan.requires_approval
-            and self.retry_policy.attempts_for(
-                plan.tool_name,
-                plan.target,
-            ) > 0
-            and not approved
-        ):
-            return None
 
         result = self.executor.execute(
             plan=plan,

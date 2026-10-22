@@ -46,57 +46,38 @@ class AgentCoordinator:
         self.finding_store = finding_store
 
     def run_once(
-        self,
-        observation: str,
-        available_tools: list[str],
+        self, observation: str, available_tools: list[str],
         evidence: list[str] | None = None,
-        target_map: dict[str, list[str]] | None = None
+        target_map: dict[str, list[str]] | None = None,
     ) -> tuple[AgentDecision, ToolResult | None]:
-
         decision = self.planner.decide(
-            observation=observation,
-            available_tools=available_tools,
-            evidence=evidence,
-            target_map=target_map
-        )
+            observation=observation, available_tools=available_tools,
+            evidence=evidence, target_map=target_map)
+        if decision.action != "RUN_TOOL" or decision.tool_action is None:
+            return decision, None
 
-        execution_targets = None
-        
-        if (
-            decision.action == "RUN_TOOL"
-            and decision.tool_action is not None
-            and decision.tool_action.tool_name == "httpx"
-            and self.target_manager is not None
-        ):
-            eligible = (
-                self.target_manager.unattempted_for(
-                    "httpx"
-                )
-            )
+        tool_name = decision.tool_action.tool_name
+        if self.target_manager is not None:
+            eligible = self.target_manager.unattempted_for(tool_name)
+            if not eligible:
+                # Never re-run a previously attempted tool/target combination.
+                return AgentDecision(action="STOP", reasoning=(
+                    f"No unattempted targets remain for {tool_name}"), tool_action=None), None
+            from dataclasses import replace
+            decision.tool_action = replace(decision.tool_action, target=eligible[0].value)
+            execution_targets = ([asset.value for asset in eligible[:self.HTTPX_BATCH_SIZE]]
+                                 if tool_name == "httpx" else None)
+        else:
+            execution_targets = None
 
-            execution_targets = [
-                asset.value
-                for asset in eligible[
-                    :self.HTTPX_BATCH_SIZE
-                ]
-            ]
-
-        result = self.executor.execute(
-            decision,
-            targets=execution_targets,
-        )
-
-        if (
-            self.target_manager is not None
-            and execution_targets
-        ):
+        # Even a failing execution counts as attempted; failures are persisted.
+        # Do not record blocked/invalid actions as attempts.
+        result = self.executor.execute(decision, targets=execution_targets)
+        if self.target_manager is not None and result is not None:
             self.target_manager.mark_attempted(
-                decision.tool_action.tool_name,
-                execution_targets,
-            )
-
+                tool_name, execution_targets or [decision.tool_action.target])
         return decision, result
-    
+
     def run(
         self,
         observation: str,
@@ -107,6 +88,7 @@ class AgentCoordinator:
         history: list[ExecutionRecord] = []
         evidence: list[str] = []
         evidence_ids: list[str] = []
+        seen_actions: set[tuple[str, str]] = set()
 
         for step in range(1, max_steps + 1):
             if self.target_manager is not None:
@@ -124,6 +106,15 @@ class AgentCoordinator:
                 evidence=evidence,
                 target_map=target_map
             )
+
+            if decision.action == "RUN_TOOL" and decision.tool_action is not None:
+                key = (decision.tool_action.tool_name, decision.tool_action.target)
+                if key in seen_actions and decision.tool_action.tool_name != "httpx":
+                    decision = AgentDecision(action="STOP", reasoning=(
+                        "Repeated action without progress"), tool_action=None)
+                    result = None
+                else:
+                    seen_actions.add(key)
 
             history.append(
                 ExecutionRecord(
