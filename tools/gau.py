@@ -2,7 +2,7 @@ from http.client import CONTINUE
 import json
 from pydoc import text
 import subprocess
-from sys import stderr
+from sys import stderr, stdout
 
 from scope.validator import ScopeValidator
 from tools.base import SecurityTool
@@ -38,6 +38,8 @@ class GauTool(SecurityTool):
                 command,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout,
                 check=False
             )
@@ -66,7 +68,8 @@ class GauTool(SecurityTool):
 
         urls = []
 
-        for line in process.stdout.splitlines():
+        stdout = process.stdout or ""
+        for line in stdout.splitlines():
             line = line.strip()
 
             if not line:

@@ -62,9 +62,9 @@ from tools.setup import build_tool_registry
 
 MODEL_NAME = "qwen3:8b"
 
-TARGET = "hytale.com"
+TARGET = "vinted.net"
 
-MAX_STEPS = 30
+MAX_STEPS = 50
 
 FFUF_WORDLIST = "data/wordlists/directories.txt"
 

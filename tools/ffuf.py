@@ -63,6 +63,8 @@ class FfufTool(SecurityTool):
                 command,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout,
                 check=False,
             )
@@ -92,8 +94,8 @@ class FfufTool(SecurityTool):
             )
 
         findings = []
-
-        for line in process.stdout.splitlines():
+        stdout = process.stdout or ""
+        for line in stdout.splitlines():
             line = line.strip()
 
             if not line:

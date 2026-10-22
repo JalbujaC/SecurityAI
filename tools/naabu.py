@@ -1,5 +1,6 @@
 import json
 import subprocess
+from sys import stdout
 
 from scope.validator import ScopeValidator
 from tools.base import SecurityTool
@@ -41,6 +42,8 @@ class NaabuTool(SecurityTool):
                 command,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout,
                 check=False
             )
@@ -68,7 +71,7 @@ class NaabuTool(SecurityTool):
             )
 
         ports = []
-
+        stdout = process.stdout or ""
         for line in process.stdout.splitlines():
             line = line.strip()
 

@@ -1,5 +1,7 @@
 import json
+from os import error
 import subprocess
+from sys import stdout
 
 from scope.validator import ScopeValidator
 from tools.base import SecurityTool
@@ -12,7 +14,7 @@ class NucleiTool(SecurityTool):
         self,
         scope_validator: ScopeValidator,
         binary: str = "nuclei",
-        timeout: int = 180,
+        timeout: int = 360,
         rate_limit: int = 5,
         severities: str = "info,low,medium",
     ):
@@ -41,6 +43,8 @@ class NucleiTool(SecurityTool):
                 command,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout,
                 check=False,
             )
@@ -71,6 +75,7 @@ class NucleiTool(SecurityTool):
 
         findings = []
 
+        stdout = process.stdout or ""
         for line in process.stdout.splitlines():
             line = line.strip()
 

@@ -63,6 +63,8 @@ class NucleiDastTool(SecurityTool):
                 command,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=self.timeout,
                 check=False,
             )
@@ -94,7 +96,7 @@ class NucleiDastTool(SecurityTool):
             )
 
         findings = []
-
+        stdout = process.stdout or ""
         for line in process.stdout.splitlines():
             line = line.strip()
 
