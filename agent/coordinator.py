@@ -1,3 +1,4 @@
+from agent.failure_policy import FailureCircuitBreaker
 import json
 
 from storage import finding_store
@@ -44,6 +45,7 @@ class AgentCoordinator:
         self.evidence_store = evidence_store
         self.analyzer = analyzer
         self.finding_store = finding_store
+        self.failure_policy = FailureCircuitBreaker(threshold=2)
 
     def run_once(
         self, observation: str, available_tools: list[str],
@@ -91,6 +93,10 @@ class AgentCoordinator:
         seen_actions: set[tuple[str, str]] = set()
 
         for step in range(1, max_steps + 1):
+            available_tools = [
+                t for t in available_tools
+                if self.failure_policy.allowed(t)
+            ]
             if self.target_manager is not None:
                 target_map = (
                     self.target_manager.planner_targets(
@@ -171,6 +177,8 @@ class AgentCoordinator:
             if result is None:
                 break
 
+            self.failure_policy.observe(result.tool_name, result)
+
             if (
                 self.evidence_store is not None
                 and result is not None
@@ -198,8 +206,11 @@ class AgentCoordinator:
                     tool_name=result.tool_name,
                     output=result.output
                 )
+            from analysis.observations import summarize_result
+            observation_summary = summarize_result(result)
             evidence.append(
                 self._summarize_result(result)
+                + f"\nEvidence classification: {observation_summary['classification']}"
             )
 
         return history

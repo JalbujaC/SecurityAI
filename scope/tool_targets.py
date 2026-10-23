@@ -1,3 +1,4 @@
+from scope.resource_policy import tool_target_allowed
 from scope.targets import TargetAsset
 
 
@@ -33,10 +34,10 @@ class ToolTargetPolicy:
         tool_name: str,
         asset: TargetAsset,
     ) -> bool:
-        return asset.kind in cls.allowed_kinds(
-            tool_name
+        return (
+            asset.kind in cls.allowed_kinds(tool_name)
+            and tool_target_allowed(tool_name, asset.value)
         )
-
     @classmethod
     def filter_assets(
         cls,

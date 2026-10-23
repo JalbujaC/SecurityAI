@@ -33,9 +33,6 @@ class NucleiTool(SecurityTool):
             "-silent",
             "-severity",
             self.severities,
-            "-rate-limit",
-            str(self.rate_limit),
-            "-no-interactsh",
         ]
 
         try:
@@ -76,7 +73,7 @@ class NucleiTool(SecurityTool):
         findings = []
 
         stdout = process.stdout or ""
-        for line in process.stdout.splitlines():
+        for line in stdout.splitlines():
             line = line.strip()
 
             if not line:
