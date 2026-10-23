@@ -30,9 +30,6 @@ class NucleiTool(SecurityTool):
             "-u",
             request.target,
             "-jsonl",
-            "-silent",
-            "-severity",
-            self.severities,
         ]
 
         try:
