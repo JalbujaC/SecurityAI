@@ -81,3 +81,10 @@ data/reports/
 !data/state/.gitkeep
 !data/reports/.gitkeep
 *.review-backup
+
+# Local SecurityAI HTTP capture intelligence (redacted data still private)
+data/traffic/
+.http12-backup/
+
+# Private HTTP traffic research and upgrade backups
+.http13-backup/

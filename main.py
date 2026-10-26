@@ -315,10 +315,19 @@ def run_recon(
         "hand it off for analysis."
     )
 
+    # Explicit opt-in: imports redacted traffic evidence before planning.
+    # No requests are replayed by this hook. Do not auto-promote to validated.
+    import os
+    traffic_seed = {}
+    if os.environ.get("SECURITYAI_TRAFFIC_PROJECT"):
+        from http_traffic.integration import seed_from_environment
+        traffic_seed = seed_from_environment(system, TARGET)
+
     return coordinator.run(
         observation=observation,
         available_tools=autonomous_tools,
         max_steps=MAX_STEPS,
+        **traffic_seed,
     )
 
 

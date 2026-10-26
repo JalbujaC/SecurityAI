@@ -85,11 +85,13 @@ class AgentCoordinator:
         observation: str,
         available_tools: list[str],
         max_steps: int = 5,
+        seed_evidence: list[str] | None = None,
+        seed_evidence_ids: list[str] | None = None,
     ) -> list[ExecutionRecord]:
 
         history: list[ExecutionRecord] = []
-        evidence: list[str] = []
-        evidence_ids: list[str] = []
+        evidence: list[str] = list(seed_evidence or [])
+        evidence_ids: list[str] = list(seed_evidence_ids or [])
         seen_actions: set[tuple[str, str]] = set()
 
         for step in range(1, max_steps + 1):
